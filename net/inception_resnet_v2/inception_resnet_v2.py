@@ -79,7 +79,8 @@ def inception_resnet_v2_base(inputs,
                              final_endpoint='Conv2d_7b_1x1',
                              output_stride=16,
                              align_feature_maps=False,
-                             scope=None):
+                             scope=None,
+                             mask=None):
   """Inception model from  http://arxiv.org/abs/1602.07261.
 
   Constructs an Inception Resnet v2 network from inputs to the given final
@@ -246,6 +247,13 @@ def inception_resnet_v2_base(inputs,
 
       # 8 x 8 x 1536
       net = slim.conv2d(net, 1536, 1, scope='Conv2d_7b_1x1')
+
+      depth = tf.shape(net)[-1]
+      change = tf.ones([1, 1, 1, depth])
+      mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+      mask_use = tf.stop_gradient(mask_end)
+      net = mask_use * net
+
       if add_and_check_final('Conv2d_7b_1x1', net): return net, end_points
 
     raise ValueError('final_endpoint (%s) not recognized', final_endpoint)
@@ -255,7 +263,8 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
                         dropout_keep_prob=0.8,
                         reuse=None,
                         scope='InceptionResnetV2',
-                        create_aux_logits=True):
+                        create_aux_logits=True,
+                        mask=None):
   """Creates the Inception Resnet V2 model.
 
   Args:
@@ -279,7 +288,7 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
     with slim.arg_scope([slim.batch_norm, slim.dropout],
                         is_training=is_training):
 
-      net, end_points = inception_resnet_v2_base(inputs, scope=scope)
+      net, end_points = inception_resnet_v2_base(inputs, scope=scope,mask=mask)
 
       if create_aux_logits:
         with tf.variable_scope('AuxLogits'):

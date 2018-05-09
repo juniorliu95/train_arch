@@ -10,16 +10,16 @@ blog: http://blog.csdn.net/u014365862/article/details/78422372
 # resnet_v2:224
 # vgg:224
 
-IMAGE_HEIGHT = 299
-IMAGE_WIDTH = 299
-num_classes = 4
+IMAGE_HEIGHT = 1024
+IMAGE_WIDTH = 1024
+num_classes = 2
 # epoch
 epoch = 1000
 batch_size = 1
 # 模型的学习率
 learning_rate = 0.00001
 keep_prob = 0.8
-
+down_sampling = 32
 
 # 设置训练样本的占总样本的比例：
 train_rate = 0.9

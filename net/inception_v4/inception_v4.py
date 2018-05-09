@@ -132,7 +132,7 @@ def block_inception_c(inputs, scope=None, reuse=None):
       return tf.concat(axis=3, values=[branch_0, branch_1, branch_2, branch_3])
 
 
-def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
+def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None,mask=None):
   """Creates the Inception V4 network up to the given final endpoint.
   Args:
     inputs: a 4-D tensor of size [batch_size, height, width, 3].
@@ -228,14 +228,20 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None):
       # 17 x 17 x 1024
       # Reduction-B block
       net = block_reduction_b(net, 'Mixed_7a')
-      if add_and_check_final('Mixed_7a', net): return net, end_points
+      if add_and_check_final('Mixed_7a', net):  return net, end_points
 
       # 8 x 8 x 1536
       # 3 x Inception-C blocks
       for idx in range(3):
         block_scope = 'Mixed_7' + chr(ord('b') + idx)
         net = block_inception_c(net, block_scope)
-        if add_and_check_final(block_scope, net): return net, end_points
+        if add_and_check_final(block_scope, net):
+          depth = tf.shape(net)[-1]
+          change = tf.ones([1, 1, 1, depth])
+          mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1],padding='SAME')
+          mask_use = tf.stop_gradient(mask_end)
+          net = mask_use * net
+          return net, end_points
   raise ValueError('Unknown final endpoint %s' % final_endpoint)
 
 
@@ -244,7 +250,7 @@ def inception_v4(inputs, num_classes=None, is_training=True,
                  dropout_keep_prob=0.8,
                  reuse=None,
                  scope='InceptionV4',
-                 create_aux_logits=True):
+                 create_aux_logits=True,mask=None):
   """Creates the Inception V4 model.
   Args:
     inputs: a 4-D tensor of size [batch_size, height, width, 3].
@@ -263,7 +269,7 @@ def inception_v4(inputs, num_classes=None, is_training=True,
   with tf.variable_scope(scope, 'InceptionV4', [inputs], reuse=reuse) as scope:
     with slim.arg_scope([slim.batch_norm, slim.dropout],
                         is_training=is_training):
-      net, end_points = inception_v4_base(inputs, scope=scope)
+      net, end_points = inception_v4_base(inputs, scope=scope,mask=mask)
       if num_classes is not None:
         with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
                             stride=1, padding='SAME'):

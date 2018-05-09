@@ -104,7 +104,8 @@ def vgg_16(inputs,
            dropout_keep_prob=0.5,
            spatial_squeeze=True,
            scope='vgg_16',
-           fc_conv_padding='VALID'):
+           fc_conv_padding='VALID',
+           mask=None):
   """Oxford Net VGG 16-Layers version D Example.
 
   Note: All the fully_connected layers have been transformed to conv2d layers.
@@ -144,6 +145,13 @@ def vgg_16(inputs,
       net = slim.max_pool2d(net, [2, 2], scope='pool4')
       net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
+
+      depth = tf.shape(net)[-1]
+      change = tf.ones([1, 1, 1, depth])
+      mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+      mask_use = tf.stop_gradient(mask_end)
+      net = mask_use * net
+
       # Use conv2d instead of fully_connected layers.
       net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
@@ -174,7 +182,8 @@ def vgg_19(inputs,
            dropout_keep_prob=0.5,
            spatial_squeeze=True,
            scope='vgg_19',
-           fc_conv_padding='VALID'):
+           fc_conv_padding='VALID',
+           mask=None):
   """Oxford Net VGG 19-Layers version E Example.
 
   Note: All the fully_connected layers have been transformed to conv2d layers.
@@ -215,6 +224,13 @@ def vgg_19(inputs,
       net = slim.max_pool2d(net, [2, 2], scope='pool4')
       net = slim.repeat(net, 4, slim.conv2d, 512, [3, 3], scope='conv5')
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
+
+      depth = tf.shape(net)[-1]
+      change = tf.ones([1, 1, 1, depth])
+      mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+      mask_use = tf.stop_gradient(mask_end)
+      net = mask_use * net
+
       # Use conv2d instead of fully_connected layers.
       net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
@@ -234,7 +250,7 @@ def vgg_19(inputs,
       else:
           net = net
           end_points = end_points
-      return net, end_pointss
+      return net, end_points
 vgg_19.default_image_size = 224
 
 # Alias

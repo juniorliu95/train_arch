@@ -80,7 +80,8 @@ def resnet_v2(inputs,
               include_root_block=True,
               spatial_squeeze=True,
               reuse=None,
-              scope=None):
+              scope=None,
+              mask=None):
   """Generator for v2 (preactivation) ResNet models.
 
   This function generates a family of ResNet v2 models. See the resnet_v2_*()
@@ -167,6 +168,13 @@ def resnet_v2(inputs,
         # normalization or activation functions in the residual unit output. See
         # Appendix of [2].
         net = slim.batch_norm(net, activation_fn=tf.nn.relu, scope='postnorm')
+
+        depth = tf.shape(net)[-1]
+        change = tf.ones([1, 1, 1, depth])
+        mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+        mask_use = tf.stop_gradient(mask_end)
+        net = mask_use * net
+
         if global_pool:
           # Global average pooling.
           net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
@@ -216,7 +224,8 @@ def resnet_v2_50(inputs,
                  output_stride=None,
                  spatial_squeeze=True,
                  reuse=None,
-                 scope='resnet_v2_50'):
+                 scope='resnet_v2_50',
+                 mask=None):
   """ResNet-50 model of [1]. See resnet_v2() for arg and return description."""
   blocks = [
       resnet_v2_block('block1', base_depth=64, num_units=3, stride=2),
@@ -238,7 +247,8 @@ def resnet_v2_101(inputs,
                   output_stride=None,
                   spatial_squeeze=True,
                   reuse=None,
-                  scope='resnet_v2_101'):
+                  scope='resnet_v2_101',
+                  mask=None):
   """ResNet-101 model of [1]. See resnet_v2() for arg and return description."""
   blocks = [
       resnet_v2_block('block1', base_depth=64, num_units=3, stride=2),
@@ -260,7 +270,8 @@ def resnet_v2_152(inputs,
                   output_stride=None,
                   spatial_squeeze=True,
                   reuse=None,
-                  scope='resnet_v2_152'):
+                  scope='resnet_v2_152',
+                  mask=None):
   """ResNet-152 model of [1]. See resnet_v2() for arg and return description."""
   blocks = [
       resnet_v2_block('block1', base_depth=64, num_units=3, stride=2),
@@ -282,7 +293,8 @@ def resnet_v2_200(inputs,
                   output_stride=None,
                   spatial_squeeze=True,
                   reuse=None,
-                  scope='resnet_v2_200'):
+                  scope='resnet_v2_200',
+                  mask=None):
   """ResNet-200 model of [2]. See resnet_v2() for arg and return description."""
   blocks = [
       resnet_v2_block('block1', base_depth=64, num_units=3, stride=2),

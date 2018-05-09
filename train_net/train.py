@@ -9,9 +9,9 @@ blog: http://blog.csdn.net/u014365862/article/details/78422372
 import numpy as np
 import tensorflow as tf
 slim = tf.contrib.slim
-import numpy as np
 import argparse
 import os
+os.path.append('../net/')
 from PIL import Image
 from datetime import datetime
 import math
@@ -22,31 +22,21 @@ from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-try:
-    from load_image import load_database_path, get_next_batch_from_path, shuffle_train_data
-except:
-    from load_image.load_image import load_database_path, get_next_batch_from_path, shuffle_train_data
+from load_image.load_image import load_database_path, get_next_batch_from_path, shuffle_train_data
 # inception_v4
-try:
-    from inception_v4 import inception_v4_arg_scope, inception_v4
-except:
-    from net.inception_v4.inception_v4 import inception_v4_arg_scope, inception_v4
-# resnet_v2_50, resnet_v2_101, resnet_v2_152
-try:
-    from resnet_v2 import resnet_arg_scope, resnet_v2_50
-except:
-    from net.resnet_v2.resnet_v2 import resnet_arg_scope, resnet_v2_50
+from net.inception_v4.inception_v4 import inception_v4_arg_scope, inception_v4
+# resnet_v2_50, resnet_v2_101, resnet_v2_152, resnet_v2_200
+from net.resnet_v2.resnet_v2 import resnet_arg_scope, resnet_v2_50, resnet_v2_101, resnet_v2_152, resnet_v2_200
 # vgg16, vgg19
-try:
-    from vgg import vgg_arg_scope, vgg_16
-except:
-    from net.vgg.vgg import vgg_arg_scope, vgg_16
+from net.vgg.vgg import vgg_arg_scope, vgg_16, vgg_19
+# inception_resnet_v2
+from net.inception_resnet_v2.inception_resnet_v2 import inception_resnet_v2_arg_scope,inception_resnet_v2
 
 
-def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False):
+def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
     arg_scope = inception_v4_arg_scope()
     with slim.arg_scope(arg_scope):
-        net, end_points = inception_v4(X, is_training=is_train)
+        net, end_points = inception_v4(X, is_training=is_train,mask=mask)
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
             # 8 x 8 x 1536
@@ -60,10 +50,21 @@ def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False):
             net = slim.fully_connected(net, num_classes, activation_fn=None,scope='Logits_out1')
     return net
 
-def arch_resnet_v2_50(X, num_classes, dropout_keep_prob=0.8, is_train=False):
+def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50, mask=None):
     arg_scope = resnet_arg_scope()
     with slim.arg_scope(arg_scope):
-        net, end_points = resnet_v2_50(X, is_training=is_train)
+        if name == 50:
+            net, end_points = resnet_v2_50(X, is_training=is_train, mask=mask)
+        elif name == 101:
+            net, end_points = resnet_v2_101(X, is_training=is_train, mask=mask)
+        elif name == 152:
+            net, end_points = resnet_v2_152(X, is_training=is_train, mask=mask)
+        elif name == 200:
+            net, end_points = resnet_v2_200(X, is_training=is_train, mask=mask)
+        else:
+            net, end_points = [], []
+            assert("not exist layer num:", name)
+
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
             net = slim.conv2d(net, 1000, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out0')
@@ -71,19 +72,31 @@ def arch_resnet_v2_50(X, num_classes, dropout_keep_prob=0.8, is_train=False):
             net = slim.conv2d(net, 200, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out1')
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out1')
             net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out2')
-            net = tf.squeeze(net,[1,2], name='SpatialSqueeze')
+            net = tf.squeeze(net,[1, 2], name='SpatialSqueeze')
     return net
 
-def arch_vgg16(X, num_classes, dropout_keep_prob=0.8, is_train=False):
+def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mask=None):
     arg_scope = vgg_arg_scope()
     with slim.arg_scope(arg_scope):
-        net, end_points = vgg_16(X, is_training=is_train)
+        if name == 16:
+            net, end_points = vgg_16(X, is_training=is_train)
+        elif name == 19:
+            net, end_points = vgg_19(X, is_training=is_train)
+        else:
+            net, end_points = [], []
+            assert ("not exist layer num:", name)
+
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
-            net = slim.conv2d(net, num_classes, [1, 1],activation_fn=None,normalizer_fn=None,scope='fc8')
+            net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,normalizer_fn=None,scope='fc8')
             net = tf.squeeze(net,[1,2], name='fc8/squeezed')
     return net
 
+def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
+    arg_scope = inception_resnet_v2_arg_scope()
+    with slim.arg_scope(arg_scope):
+        net, end_points = inception_resnet_v2(X, is_training=is_train,num_classes=num_classes)
+    return net
 
 def g_parameter(checkpoint_exclude_scopes):
     exclusions = []
@@ -111,23 +124,38 @@ def g_parameter(checkpoint_exclude_scopes):
 
 
 def train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
-           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
+           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="pretrain/inception_v4/inception_v4.ckpt",downsampling=32):
 
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     #Y = tf.placeholder(tf.float32, [None, 4])
     Y = tf.placeholder(tf.float32, [None, num_classes])
+    #TODO: add mask input
+    MASK = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT/downsampling, IMAGE_WIDTH/downsampling, 1])
     is_training = tf.placeholder(tf.bool, name='is_training')
     k_prob = tf.placeholder(tf.float32) # dropout
 
     # 定义模型
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(X, num_classes, k_prob, is_training)
-    elif arch_model == "arch_resnet_v2_50":
-        net = arch_resnet_v2_50(X, num_classes, k_prob, is_training)
-    elif arch_model == "vgg_16":
-        net = arch_vgg16(X, num_classes, k_prob, is_training)
+        net = arch_inception_v4(X, num_classes, k_prob, is_training,mask=MASK)
 
-    # 
+    elif arch_model == "arch_resnet_v2_50":
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training, mask=MASK)
+    elif arch_model == "arch_resnet_v2_101":
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training, name=101, mask=MASK)
+    elif arch_model == "arch_resnet_v2_152":
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=152, mask=MASK)
+    elif arch_model == "arch_resnet_v2_200":
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
+
+    elif arch_model == "vgg_16":
+        net = arch_vgg(X, num_classes, k_prob, is_training, mask=MASK)
+    elif arch_model == "vgg_19":
+        net = arch_vgg(X, num_classes, k_prob, is_training, name=19, mask=MASK)
+    elif arch_model == "inception_resnet_v2":
+        net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
+    else:
+        net = []
+
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
 
     # loss function
