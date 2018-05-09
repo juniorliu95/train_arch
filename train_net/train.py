@@ -173,7 +173,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('./train.tfrecord', epoch)
+    image_flow, label_flow, mask_flow = read_and_decode('dataset/train.tfrecord', epoch)
 
     img_batch, label_batch,mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
@@ -280,7 +280,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, learning_rate, num_classes, epoch, batch_siz
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('./test.tfrecord', epoch)
+    image_flow, label_flow, mask_flow = read_and_decode('dataset/test.tfrecord', epoch)
 
     img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,

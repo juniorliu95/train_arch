@@ -99,14 +99,14 @@ def read_and_decode(filename, epoch=None,is_train=True):
     if is_train:
         features = tf.parse_single_example(serialized_example,
                                            features={
-                                               'label': tf.FixedLenFeature([], tf.string),
+                                               'label': tf.FixedLenFeature([], tf.int64),
                                                'img_raw': tf.FixedLenFeature([], tf.string),
                                                'mask': tf.FixedLenFeature([], tf.string)
                                            })  # 将image数据和label取出来
     else:
         features = tf.parse_single_example(serialized_example,
                                            features={
-                                               'label': tf.FixedLenFeature([], tf.string),
+                                               'label': tf.FixedLenFeature([], tf.int64),
                                                'img_raw': tf.FixedLenFeature([], tf.string),
                                            })  # 将image数据和label取出来
     img0 = tf.decode_raw(features['img_raw'], tf.uint8)
@@ -115,7 +115,7 @@ def read_and_decode(filename, epoch=None,is_train=True):
     mean = tf.reduce_mean(img0)
     std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
     img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
-    label = tf.decode_raw(features['label'], tf.float64)  # 在流中抛出label张量
+    label = features['label'] # 在流中抛出label张量
     label = tf.cast(label, tf.float32)
     if is_train:
         mask0 = tf.decode_raw(features['img_raw'], tf.uint8)
