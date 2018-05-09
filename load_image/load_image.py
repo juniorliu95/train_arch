@@ -89,18 +89,44 @@ def get_next_batch_from_path(image_path, image_labels, pointer, IMAGE_HEIGHT=299
         batch_y[i] = image_labels[i+pointer*batch_size]
     return batch_x, batch_y
 
+#read tfrecord file
+def read_and_decode(filename, epoch=None,is_train=True):
+    filename_queue = tf.train.string_input_producer\
+        ([filename], num_epochs=epoch, shuffle=True)#生成一个random queue队列
+    reader = tf.TFRecordReader()
+    _, serialized_example = reader.read(filename_queue)#返回文件名和文件
+
+    if is_train:
+        features = tf.parse_single_example(serialized_example,
+                                           features={
+                                               'label': tf.FixedLenFeature([], tf.string),
+                                               'img_raw': tf.FixedLenFeature([], tf.string),
+                                               'mask': tf.FixedLenFeature([], tf.string)
+                                           })  # 将image数据和label取出来
+    else:
+        features = tf.parse_single_example(serialized_example,
+                                           features={
+                                               'label': tf.FixedLenFeature([], tf.string),
+                                               'img_raw': tf.FixedLenFeature([], tf.string),
+                                           })  # 将image数据和label取出来
+    img0 = tf.decode_raw(features['img_raw'], tf.uint8)
+    img0 = tf.reshape(img0, [1024, 1024, 3])  # reshape为128*128的1通道图片
+    img0 = tf.cast(img0, tf.float32)
+    mean = tf.reduce_mean(img0)
+    std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
+    img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
+    label = tf.decode_raw(features['label'], tf.float64)  # 在流中抛出label张量
+    label = tf.cast(label, tf.float32)
+    if is_train:
+        mask0 = tf.decode_raw(features['img_raw'], tf.uint8)
+        mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
+        mask0 = tf.cast(mask0, tf.float32)
+        return img0,label,mask0
+    return img0, label
+
 
 def test():
-
-    craterDir = "train"
-    data, label = load_database(craterDir)
-    print (data.shape)
-    print (len(data))
-    print (data[0].shape)
-    print (label[0])
-    batch_x, batch_y = get_next_batch_from_path(data, label, 0, IMAGE_HEIGHT=299, IMAGE_WIDTH=299, batch_size=64, is_train=True)
-    print (batch_x)
-    print (batch_y)
+    img0, label, mask0 = read_and_decode('./train.tfrecord', epoch=None, is_train=True)
 
 if __name__ == '__main__':
     test()

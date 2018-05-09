@@ -12,11 +12,13 @@ slim = tf.contrib.slim
 import argparse
 import os
 os.path.append('../net/')
+from load_image.load_image import read_and_decode
+import config
 from PIL import Image
 from datetime import datetime
 import math
 import time
-import cv2
+# import cv2
 
 from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -123,14 +125,13 @@ def g_parameter(checkpoint_exclude_scopes):
     return variables_to_restore,variables_to_train
 
 
-def train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
+def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
            arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="pretrain/inception_v4/inception_v4.ckpt",downsampling=32):
 
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     #Y = tf.placeholder(tf.float32, [None, 4])
     Y = tf.placeholder(tf.float32, [None, num_classes])
-    #TODO: add mask input
-    MASK = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT/downsampling, IMAGE_WIDTH/downsampling, 1])
+    MASK = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT//downsampling, IMAGE_WIDTH//downsampling, 1])
     is_training = tf.placeholder(tf.bool, name='is_training')
     k_prob = tf.placeholder(tf.float32) # dropout
 
@@ -155,7 +156,7 @@ def train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HE
         net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
     else:
         net = []
-
+        assert('model not expected:',arch_model)
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
 
     # loss function
@@ -172,9 +173,16 @@ def train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HE
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
+    image_flow, label_flow, mask_flow = read_and_decode('./train.tfrecord', epoch)
+
+    img_batch, label_batch,mask_batch = tf.train.shuffle_batch \
+        ([image_flow, label_flow, mask_flow], batch_size=batch_size,
+         capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
+
     sess = tf.Session()
     init = tf.global_variables_initializer()
     sess.run(init)
+    sess.run(tf.local_variables_initializer())
 
     saver2 = tf.train.Saver(tf.global_variables())
     model_path = 'model/fine-tune'
@@ -182,50 +190,139 @@ def train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HE
     net_vars = variables_to_restore
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
+    # saver2.restore(sess, "model/fine-tune-1120")
     saver_net.restore(sess, checkpoint_path)
 
-    # saver2.restore(sess, "model/fine-tune-1120")
-    for epoch_i in range(epoch):
-        for batch_i in range(int(train_n/batch_size)):
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
-            images_train, labels_train = get_next_batch_from_path(train_data, train_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=True)
+    i = 0
+    try:
+        while not coord.should_stop():
+    # for epoch_i in range(epoch):
+    #     for batch_i in range(int(train_n/batch_size)):
+            images_train, labels_train,masks_train = sess.run([img_batch, label_batch,mask_batch])
+            # images_train, labels_train = get_next_batch_from_path(train_data, train_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=True)
 
-            los, _ = sess.run([loss,optimizer], feed_dict={X: images_train, Y: labels_train, k_prob:keep_prob, is_training:True})
+            loss, _ = sess.run([loss,optimizer], feed_dict={X: images_train, Y: labels_train, k_prob:keep_prob, is_training:True, MASK:masks_train})
             # print (los)
 
-            if batch_i % 100 == 0:
-                images_valid, labels_valid = get_next_batch_from_path(valid_data, valid_label, batch_i%(int(valid_n/batch_size)), IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=False)
-                ls, acc = sess.run([loss, accuracy], feed_dict={X: images_valid, Y: labels_valid, k_prob:1.0, is_training:False})
-                print('Batch: {:>2}: Validation loss: {:>3.5f}, Validation accuracy: {:>3.5f}'.format(batch_i, ls, acc))
+            if i % 100 == 0:
+                # images_valid, labels_valid = get_next_batch_from_path(valid_data, valid_label, batch_i%(int(valid_n/batch_size)), IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=False)
+                ls, acc = sess.run([loss, accuracy], feed_dict={X: images_train, Y: labels_train, k_prob:1.0, is_training:False, MASK:masks_train})
+                print('Batch: {:>2}: Validation loss: {:>3.5f}, Validation accuracy: {:>3.5f}'.format(i, ls, acc))
                 #if acc > 0.90:
                 #    saver2.save(sess, model_path, global_step=batch_i, write_meta_graph=False)
-            elif batch_i % 20 == 0:
-                loss_, acc_ = sess.run([loss, accuracy], feed_dict={X: images_train, Y: labels_train, k_prob:1.0, is_training:False})
-                print('Batch: {:>2}: Training loss: {:>3.5f}, Training accuracy: {:>3.5f}'.format(batch_i, loss_, acc_))
+            # elif batch_i % 20 == 0:
+            #     loss_, acc_ = sess.run([loss, accuracy], feed_dict={X: images_train, Y: labels_train, k_prob:1.0, is_training:False,MASK:masks_train})
+            #     print('Batch: {:>2}: Training loss: {:>3.5f}, Training accuracy: {:>3.5f}'.format(batch_i, loss_, acc_))
                 
-        print('Epoch===================================>: {:>2}'.format(epoch_i))
-        valid_ls = 0
-        valid_acc = 0
-        for batch_i in range(int(valid_n/batch_size)):
-            images_valid, labels_valid = get_next_batch_from_path(valid_data, valid_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=False)
-            epoch_ls, epoch_acc = sess.run([loss, accuracy], feed_dict={X: images_valid, Y: labels_valid, k_prob:1.0, is_training:False})
-            valid_ls = valid_ls + epoch_ls
-            valid_acc = valid_acc + epoch_acc
-        print('Epoch: {:>2}: Validation loss: {:>3.5f}, Validation accuracy: {:>3.5f}'.format(epoch_i, valid_ls/int(valid_n/batch_size), valid_acc/int(valid_n/batch_size)))
-        if valid_acc/int(valid_n/batch_size) > 0.90:
-            saver2.save(sess, model_path, global_step=epoch_i, write_meta_graph=False)
-        
-        print('>>>>>>>>>>>>>>>>>>>shuffle train_data<<<<<<<<<<<<<<<<<')
-        # 每个epoch，重新打乱一次训练集：
-        train_data, train_label = shuffle_train_data(train_data, train_label)
-        
+        # print('Epoch===================================>: {:>2}'.format(epoch_i))
+        # valid_ls = 0
+        # valid_acc = 0
+        # for batch_i in range(int(valid_n/batch_size)):
+        #     images_valid, labels_valid = get_next_batch_from_path(valid_data, valid_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=False)
+        #     epoch_ls, epoch_acc = sess.run([loss, accuracy], feed_dict={X: images_valid, Y: labels_valid, k_prob:1.0, is_training:False})
+        #     valid_ls = valid_ls + epoch_ls
+        #     valid_acc = valid_acc + epoch_acc
+        # print('Epoch: {:>2}: Validation loss: {:>3.5f}, Validation accuracy: {:>3.5f}'.format(epoch_i, valid_ls/int(valid_n/batch_size), valid_acc/int(valid_n/batch_size)))
+        # if valid_acc/int(valid_n/batch_size) > 0.90:
+            i += 1
+    except tf.errors.OutOfRangeError:
+        print('Done training -- epoch limit reached')
+    finally:
+    # When done, ask the threads to stop.
+    # test save
+        saver2.save(sess, model_path, global_step=i, write_meta_graph=False)
+        coord.request_stop()
+    # Wait for threads to finish.
+    coord.join(threads)
+    sess.close()
+
+
+def test(IMAGE_HEIGHT, IMAGE_WIDTH, learning_rate, num_classes, epoch, batch_size=64, keep_prob=0.8,
+          arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
+          checkpoint_path="pretrain/inception_v4/inception_v4.ckpt", downsampling=32):
+    X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
+    Y = tf.placeholder(tf.float32, [None, num_classes])
+    MASK = functionformask
+    k_prob = tf.placeholder(tf.float32)  # dropout
+
+    # 定义模型
+    if arch_model == "arch_inception_v4":
+        net = arch_inception_v4(X, num_classes, k_prob,mask=MASK)
+
+    elif arch_model == "arch_resnet_v2_50":
+        net = arch_resnet_v2(X, num_classes, k_prob, mask=MASK)
+    elif arch_model == "arch_resnet_v2_101":
+        net = arch_resnet_v2(X, num_classes, k_prob, name=101, mask=MASK)
+    elif arch_model == "arch_resnet_v2_152":
+        net = arch_resnet_v2(X, num_classes, k_prob, name=152, mask=MASK)
+    elif arch_model == "arch_resnet_v2_200":
+        net = arch_resnet_v2(X, num_classes, k_prob, name=200, mask=MASK)
+
+    elif arch_model == "vgg_16":
+        net = arch_vgg(X, num_classes, k_prob, mask=MASK)
+    elif arch_model == "vgg_19":
+        net = arch_vgg(X, num_classes, k_prob, name=19, mask=MASK)
+    elif arch_model == "inception_resnet_v2":
+        net = inception_resnet_v2(X, num_classes, k_prob, mask=MASK)
+    else:
+        net = []
+        assert ('model not expected:', arch_model)
+    variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
+
+    var_list = variables_to_train
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    predict = tf.reshape(net, [-1, num_classes])
+    max_idx_p = tf.argmax(predict, 1)
+    max_idx_l = tf.argmax(Y, 1)
+    correct_pred = tf.equal(max_idx_p, max_idx_l)
+    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    # ------------------------------------------------------------------------------------#
+    image_flow, label_flow, mask_flow = read_and_decode('./test.tfrecord', epoch)
+
+    img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
+        ([image_flow, label_flow, mask_flow], batch_size=batch_size,
+         capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
+
+    sess = tf.Session()
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    sess.run(tf.local_variables_initializer())
+
+    net_vars = variables_to_restore
+    saver_net = tf.train.Saver(net_vars)
+    # checkpoint_path = 'pretrain/inception_v4.ckpt'
+    # saver2.restore(sess, "model/fine-tune-1120")
+    saver_net.restore(sess, checkpoint_path)
+
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+
+    i = 0
+    try:
+        while not coord.should_stop():
+            # for epoch_i in range(epoch):
+            #     for batch_i in range(int(train_n/batch_size)):
+            images_train, labels_train, masks_train = sess.run([img_batch, label_batch, mask_batch])
+
+            acc = sess.run(accuracy, feed_dict={X: images_train, Y: labels_train, k_prob: 1.0})
+            print('Batch: {:>2}: Validation accuracy: {:>3.5f}'.format(i, acc))
+            i += 1
+    except tf.errors.OutOfRangeError:
+        print('Done training -- epoch limit reached')
+    finally:
+        coord.request_stop()
+    # Wait for threads to finish.
+    coord.join(threads)
     sess.close()
 
 if __name__ == '__main__':
 
-    IMAGE_HEIGHT = 299
-    IMAGE_WIDTH = 299
-    num_classes = 4
+    IMAGE_HEIGHT = 1024
+    IMAGE_WIDTH = 1024
+    num_classes = 2
     # epoch
     epoch = 100
     batch_size = 16
@@ -243,24 +340,6 @@ if __name__ == '__main__':
     arch_model="arch_inception_v4"
     checkpoint_exclude_scopes = "Logits_out"
     checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"
-    
-    ##----------------------------------------------------------------------------##
-    X_sample, Y_sample = load_database_path(craterDir)
-    image_n = len(X_sample)
-    # 样本的总数量
-    print ("样本的总数量:")
-    print (image_n)
-    # 定义90%作为训练样本
-    train_n = int(image_n*train_rate)
-    valid_n = int(image_n*(1-train_rate))
-    train_data, train_label = X_sample[0:train_n], Y_sample[0:train_n]
-    # 定位10%作为测试样本
-    valid_data, valid_label = X_sample[train_n:image_n], Y_sample[train_n:image_n]
-    # ont-hot
-    train_label = np_utils.to_categorical(train_label, num_classes)
-    valid_label = np_utils.to_categorical(valid_label, num_classes)
-    ##----------------------------------------------------------------------------##
-
     print ("-----------------------------train.py start--------------------------")
-    train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
+    train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
           arch_model,checkpoint_exclude_scopes, checkpoint_path)

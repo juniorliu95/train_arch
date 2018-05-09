@@ -20,6 +20,9 @@ batch_size = 1
 learning_rate = 0.00001
 keep_prob = 0.8
 down_sampling = 32
+# tfrecord 读取
+capacity = 5000
+min_after_dequeue = 3000
 
 # 设置训练样本的占总样本的比例：
 train_rate = 0.9
