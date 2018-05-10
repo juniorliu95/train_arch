@@ -17,14 +17,13 @@ import math
 import time
 from load_image.load_image import load_database_path, get_next_batch_from_path
 from train_net.train import train
-import cv2
 import os
 from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import config
 # TODO:rewrite
-tf.app.flags.DEFINE_string('mode', 'train',"train or test")
+tf.app.flags.DEFINE_string('mode', 'train', "train or test")
 tf.app.flags.DEFINE_integer('network', 'vgg_19', "choose basic network")
 tf.app.flags.DEFINE_boolean('bool_name', False, "descript3")
 
@@ -40,7 +39,6 @@ def main(_):
     # 模型的学习率
     learning_rate = config.learning_rate
     keep_prob = config.keep_prob
-    downsampling = config.down_sampling
     ##----------------------------------------------------------------------------##
     # 设置训练样本的占总样本的比例：
     train_rate = config.train_rate
@@ -75,10 +73,8 @@ def main(_):
     ##----------------------------------------------------------------------------##
 
     print ("-----------------------------train.py start--------------------------")
-    train(train_data,train_label,valid_data,valid_label,train_n,valid_n,IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
-          arch_model, checkpoint_exclude_scopes, checkpoint_path, downsampling)
-
-    # need to add checkpoint_path
+    train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
+          arch_model, checkpoint_exclude_scopes, checkpoint_path)
 
 if __name__ == '__main__':
     tf.app.run()

@@ -250,6 +250,8 @@ def inception_resnet_v2_base(inputs,
 
       depth = tf.shape(net)[-1]
       change = tf.ones([1, 1, 1, depth])
+      mask = tf.image.resize_images(mask, tf.shape(net)[1, 2])
+      mask = tf.where(mask > 0.5, tf.ones(tf.shape(net)[1, 2]), tf.zeros(tf.shape(net)[1, 2]))
       mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
       mask_use = tf.stop_gradient(mask_end)
       net = mask_use * net

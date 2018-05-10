@@ -19,7 +19,7 @@ batch_size = 1
 # 模型的学习率
 learning_rate = 0.00001
 keep_prob = 0.8
-down_sampling = 32
+
 # tfrecord 读取
 capacity = 5000
 min_after_dequeue = 3000
@@ -40,9 +40,7 @@ arch_model="arch_inception_v4"
 checkpoint_exclude_scopes = "Logits_out"
 
 # 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
-# checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"; 
-# checkpoint_path="pretrain/resnet_v2_50/resnet_v2_50.ckpt"
-checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"
+checkpoint_path = "pretrain/" + arch_model + "/inception_v4.ckpt"
 
 #训练好的模型参数在model文件夹下。
 

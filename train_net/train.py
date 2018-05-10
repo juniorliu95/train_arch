@@ -126,12 +126,12 @@ def g_parameter(checkpoint_exclude_scopes):
 
 
 def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
-           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="pretrain/inception_v4/inception_v4.ckpt",downsampling=32):
+           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
 
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     #Y = tf.placeholder(tf.float32, [None, 4])
     Y = tf.placeholder(tf.float32, [None, num_classes])
-    MASK = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT//downsampling, IMAGE_WIDTH//downsampling, 1])
+    MASK = tf.placeholder(tf.float32, [None, 400, 400, 1])
     is_training = tf.placeholder(tf.bool, name='is_training')
     k_prob = tf.placeholder(tf.float32) # dropout
 
@@ -239,13 +239,12 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     coord.join(threads)
     sess.close()
 
-
-def test(IMAGE_HEIGHT, IMAGE_WIDTH, learning_rate, num_classes, epoch, batch_size=64, keep_prob=0.8,
+def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          checkpoint_path="pretrain/inception_v4/inception_v4.ckpt", downsampling=32):
+          checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     Y = tf.placeholder(tf.float32, [None, num_classes])
-    MASK = functionformask
+    MASK = tf.placeholder(tf.float32, [None, 400, 400, 1])
     k_prob = tf.placeholder(tf.float32)  # dropout
 
     # 定义模型
@@ -280,7 +279,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, learning_rate, num_classes, epoch, batch_siz
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('dataset/test.tfrecord', epoch)
+    image_flow, label_flow, mask_flow = read_and_decode('dataset/pre_test.tfrecord', epoch)
 
     img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
@@ -307,6 +306,85 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, learning_rate, num_classes, epoch, batch_siz
             #     for batch_i in range(int(train_n/batch_size)):
             images_train, labels_train, masks_train = sess.run([img_batch, label_batch, mask_batch])
 
+            acc = sess.run(accuracy, feed_dict={X: images_train, Y: labels_train, k_prob: 1.0, MASK: MASK})
+            print('Batch: {:>2}: Validation accuracy: {:>3.5f}'.format(i, acc))
+            i += 1
+    except tf.errors.OutOfRangeError:
+        print('Done training -- epoch limit reached')
+    finally:
+        coord.request_stop()
+    # Wait for threads to finish.
+    coord.join(threads)
+    sess.close()
+
+def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
+          arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
+          checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
+    X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
+    Y = tf.placeholder(tf.float32, [None, num_classes])
+# TODO: get mask interface
+    MASK = pass
+    k_prob = tf.placeholder(tf.float32)  # dropout
+
+    # 定义模型
+    if arch_model == "arch_inception_v4":
+        net = arch_inception_v4(X, num_classes, k_prob,mask=MASK)
+
+    elif arch_model == "arch_resnet_v2_50":
+        net = arch_resnet_v2(X, num_classes, k_prob, mask=MASK)
+    elif arch_model == "arch_resnet_v2_101":
+        net = arch_resnet_v2(X, num_classes, k_prob, name=101, mask=MASK)
+    elif arch_model == "arch_resnet_v2_152":
+        net = arch_resnet_v2(X, num_classes, k_prob, name=152, mask=MASK)
+    elif arch_model == "arch_resnet_v2_200":
+        net = arch_resnet_v2(X, num_classes, k_prob, name=200, mask=MASK)
+
+    elif arch_model == "vgg_16":
+        net = arch_vgg(X, num_classes, k_prob, mask=MASK)
+    elif arch_model == "vgg_19":
+        net = arch_vgg(X, num_classes, k_prob, name=19, mask=MASK)
+    elif arch_model == "inception_resnet_v2":
+        net = inception_resnet_v2(X, num_classes, k_prob, mask=MASK)
+    else:
+        net = []
+        assert ('model not expected:', arch_model)
+    variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
+
+    var_list = variables_to_train
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    predict = tf.reshape(net, [-1, num_classes])
+    max_idx_p = tf.argmax(predict, 1)
+    max_idx_l = tf.argmax(Y, 1)
+    correct_pred = tf.equal(max_idx_p, max_idx_l)
+    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    # ------------------------------------------------------------------------------------#
+    image_flow, label_flow= read_and_decode('dataset/test.tfrecord', epoch)
+
+    img_batch, label_batch = tf.train.shuffle_batch \
+        ([image_flow, label_flow], batch_size=batch_size,
+         capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
+
+    sess = tf.Session()
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    sess.run(tf.local_variables_initializer())
+
+    net_vars = variables_to_restore
+    saver_net = tf.train.Saver(net_vars)
+    # checkpoint_path = 'pretrain/inception_v4.ckpt'
+    # saver2.restore(sess, "model/fine-tune-1120")
+    saver_net.restore(sess, checkpoint_path)
+
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+
+    i = 0
+    try:
+        while not coord.should_stop():
+            # for epoch_i in range(epoch):
+            #     for batch_i in range(int(train_n/batch_size)):
+            images_train, labels_train, masks_train = sess.run([img_batch, label_batch])
+
             acc = sess.run(accuracy, feed_dict={X: images_train, Y: labels_train, k_prob: 1.0})
             print('Batch: {:>2}: Validation accuracy: {:>3.5f}'.format(i, acc))
             i += 1
@@ -325,18 +403,13 @@ if __name__ == '__main__':
     num_classes = 2
     # epoch
     epoch = 100
-    batch_size = 16
+    batch_size = 4
     # 模型的学习率
     learning_rate = 0.00001
     keep_prob = 0.8
 
     
     ##----------------------------------------------------------------------------##
-    # 设置训练样本的占总样本的比例：
-    train_rate = 0.9
-    # 每个类别保存到一个文件中，放在此目录下，只要是二级目录就可以。
-    craterDir = "train"
-    # arch_model="arch_inception_v4";  arch_model="arch_resnet_v2_50"; arch_model="vgg_16"
     arch_model="arch_inception_v4"
     checkpoint_exclude_scopes = "Logits_out"
     checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"

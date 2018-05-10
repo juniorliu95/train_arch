@@ -237,6 +237,8 @@ def inception_v4_base(inputs, final_endpoint='Mixed_7d', scope=None,mask=None):
         net = block_inception_c(net, block_scope)
         if add_and_check_final(block_scope, net):
           depth = tf.shape(net)[-1]
+          mask = tf.image.resize_images(mask, tf.shape(net)[1, 2])
+          mask = tf.where(mask > 0.5, tf.ones(tf.shape(net)[1, 2]), tf.zeros(tf.shape(net)[1, 2]))
           change = tf.ones([1, 1, 1, depth])
           mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1],padding='SAME')
           mask_use = tf.stop_gradient(mask_end)
