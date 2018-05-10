@@ -19,7 +19,7 @@ from datetime import datetime
 import math
 import time
 # import cv2
-
+from mask import model_copy
 from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -179,6 +179,11 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
          capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
 
+    if tf.shape(img_batch)[-1] == 1:
+        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
+
+    label_batch = tf.one_hot(label_batch, num_classes, on_value=1, axis=0)
+
     sess = tf.Session()
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -201,7 +206,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         while not coord.should_stop():
     # for epoch_i in range(epoch):
     #     for batch_i in range(int(train_n/batch_size)):
-            images_train, labels_train,masks_train = sess.run([img_batch, label_batch,mask_batch])
+            images_train, labels_train, masks_train = sess.run([img_batch, label_batch,mask_batch])
             # images_train, labels_train = get_next_batch_from_path(train_data, train_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=True)
 
             loss, _ = sess.run([loss,optimizer], feed_dict={X: images_train, Y: labels_train, k_prob:keep_prob, is_training:True, MASK:masks_train})
@@ -285,6 +290,11 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
          capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
 
+    if tf.shape(img_batch)[-1] == 1:
+        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
+
+    label_batch = tf.one_hot(label_batch, num_classes, on_value=1, axis=0)
+
     sess = tf.Session()
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -323,46 +333,59 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     Y = tf.placeholder(tf.float32, [None, num_classes])
 # TODO: get mask interface
-    MASK = pass
+    filename = "../mask_ckpt/"  # 修改
+    chkpt_path = filename + "checkpoints/2018-04-19-1499"
+    images_input = tf.split(X, 3, axis=-1)
+    images_input_test = images_input[0]
+    # images_input_test = X[-1, IMAGE_HEIGHT, IMAGE_WIDTH, 0]
+    images_input_test = tf.image.resize_images(images_input_test, [400, 400])
+    mask = model_copy.predict(filename, images_input_test, chkpt_path, batch_size)
+    MASK = mask
     k_prob = tf.placeholder(tf.float32)  # dropout
 
     # 定义模型
-    if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(X, num_classes, k_prob,mask=MASK)
+    with tf.device('gpu:0'):
+        if arch_model == "arch_inception_v4":
+            net = arch_inception_v4(X, num_classes, k_prob,mask=MASK)
 
-    elif arch_model == "arch_resnet_v2_50":
-        net = arch_resnet_v2(X, num_classes, k_prob, mask=MASK)
-    elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(X, num_classes, k_prob, name=101, mask=MASK)
-    elif arch_model == "arch_resnet_v2_152":
-        net = arch_resnet_v2(X, num_classes, k_prob, name=152, mask=MASK)
-    elif arch_model == "arch_resnet_v2_200":
-        net = arch_resnet_v2(X, num_classes, k_prob, name=200, mask=MASK)
+        elif arch_model == "arch_resnet_v2_50":
+            net = arch_resnet_v2(X, num_classes, k_prob, mask=MASK)
+        elif arch_model == "arch_resnet_v2_101":
+            net = arch_resnet_v2(X, num_classes, k_prob, name=101, mask=MASK)
+        elif arch_model == "arch_resnet_v2_152":
+            net = arch_resnet_v2(X, num_classes, k_prob, name=152, mask=MASK)
+        elif arch_model == "arch_resnet_v2_200":
+            net = arch_resnet_v2(X, num_classes, k_prob, name=200, mask=MASK)
 
-    elif arch_model == "vgg_16":
-        net = arch_vgg(X, num_classes, k_prob, mask=MASK)
-    elif arch_model == "vgg_19":
-        net = arch_vgg(X, num_classes, k_prob, name=19, mask=MASK)
-    elif arch_model == "inception_resnet_v2":
-        net = inception_resnet_v2(X, num_classes, k_prob, mask=MASK)
-    else:
-        net = []
-        assert ('model not expected:', arch_model)
-    variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
+        elif arch_model == "vgg_16":
+            net = arch_vgg(X, num_classes, k_prob, mask=MASK)
+        elif arch_model == "vgg_19":
+            net = arch_vgg(X, num_classes, k_prob, name=19, mask=MASK)
+        elif arch_model == "inception_resnet_v2":
+            net = inception_resnet_v2(X, num_classes, k_prob, mask=MASK)
+        else:
+            net = []
+            assert ('model not expected:', arch_model)
+        variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
 
-    var_list = variables_to_train
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    predict = tf.reshape(net, [-1, num_classes])
-    max_idx_p = tf.argmax(predict, 1)
-    max_idx_l = tf.argmax(Y, 1)
-    correct_pred = tf.equal(max_idx_p, max_idx_l)
-    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+        var_list = variables_to_train
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        predicts = tf.reshape(net, [-1, num_classes])
+        max_idx_p = tf.argmax(predicts, 1)
+        max_idx_l = tf.argmax(Y, 1)
+        correct_pred = tf.equal(max_idx_p, max_idx_l)
+        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
     image_flow, label_flow= read_and_decode('dataset/test.tfrecord', epoch)
 
     img_batch, label_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow], batch_size=batch_size,
          capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
+
+    if tf.shape(img_batch)[-1] == 1:
+        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
+
+    label_batch = tf.one_hot(label_batch, num_classes, on_value=1, axis=0)
 
     sess = tf.Session()
     init = tf.global_variables_initializer()

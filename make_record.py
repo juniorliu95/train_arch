@@ -24,7 +24,7 @@ writer = tf.python_io.TFRecordWriter(cwd+"train.tfrecord") #要生成的文件
 for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # 生成训练集
     img_path = cwd+classes[0]+img_name #每一个图片的地址
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 3))
+    img = img.resize((1024, 1024, 1))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -48,7 +48,7 @@ for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # 生成训练集
 for i, img_name in enumerate(os.listdir(cwd + classes[1])):
     img_path = cwd + classes[1] + img_name  # 每一个图片的地址
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 3))
+    img = img.resize((1024, 1024, 1))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -81,7 +81,7 @@ for i, img_name in enumerate(os.listdir(cwd + classes[2])):  # 生成测试集
     class_path = cwd + classes[2]
     img_path = class_path+img_name #每一个图片的地址
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 3))
+    img = img.resize((1024, 1024, 1))
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
     img_raw = img.tobytes()#将图片转化为二进制格式
@@ -97,7 +97,7 @@ for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     class_path = cwd + classes[3]
     img_path = class_path+img_name #每一个图片的地址
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 3))
+    img = img.resize((1024, 1024, 1))
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
     img_raw = img.tobytes()#将图片转化为二进制格式
@@ -117,7 +117,7 @@ writer2 = tf.python_io.TFRecordWriter(cwd+"pre_train.tfrecord") #要生成的文
 for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # 生成预测试集
     img_path = cwd+classes[0]+img_name #每一个图片的地址
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 3))
+    img = img.resize((1024, 1024, 1))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -141,7 +141,7 @@ for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # 生成预测试集
 for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     img_path = cwd + classes[1] + img_name  # 每一个图片的地址
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 3))
+    img = img.resize((1024, 1024, 1))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
