@@ -40,7 +40,7 @@ arch_model="arch_inception_v4"
 checkpoint_exclude_scopes = "Logits_out"
 
 # 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
-checkpoint_path = "pretrain/" + arch_model + "/inception_v4.ckpt"
+checkpoint_path = "../ckpt/" + arch_model + ".ckpt"
 
 #训练好的模型参数在model文件夹下。
 
