@@ -126,7 +126,7 @@ def g_parameter(checkpoint_exclude_scopes):
 
 
 def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
-           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
+           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="../ckpt/inception_v4/inception_v4.ckpt"):
 
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     #Y = tf.placeholder(tf.float32, [None, 4])
@@ -173,7 +173,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('dataset/train.tfrecord', epoch)
+    image_flow, label_flow, mask_flow = read_and_decode('../dataset/train.tfrecord', epoch)
 
     img_batch, label_batch,mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
@@ -185,7 +185,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     sess.run(tf.local_variables_initializer())
 
     saver2 = tf.train.Saver(tf.global_variables())
-    model_path = 'model/fine-tune'
+    model_path = '../model/fine-tune'
 
     net_vars = variables_to_restore
     saver_net = tf.train.Saver(net_vars)
@@ -279,7 +279,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('dataset/pre_test.tfrecord', epoch)
+    image_flow, label_flow, mask_flow = read_and_decode('../dataset/pre_test.tfrecord', epoch)
 
     img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,

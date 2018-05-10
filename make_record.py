@@ -17,7 +17,7 @@ import numpy as np
 # cwd = 'E:/fingerprint/1030/'
 # cwd = 'E:/fingerprint/1216/'
 # cwd = 'E:/fingerprint/1222/'
-cwd = 'dataset/'
+cwd = '../dataset/'
 classes = ('train/', 'train_normal/', 'test/', 'test_normal/', 'mask/') #人为 设定 2 类
 
 writer = tf.python_io.TFRecordWriter(cwd+"train.tfrecord") #要生成的文件
