@@ -7,7 +7,7 @@ images are of [160,160]
 # -*- coding = utf-8 -*-
 import os
 import tensorflow as tf
-from PIL import Image  #注意Image,后面会用到
+from PIL import Image
 from PIL import ImageStat
 from PIL import ImageMath
 import numpy as np
@@ -18,13 +18,13 @@ import numpy as np
 # cwd = 'E:/fingerprint/1216/'
 # cwd = 'E:/fingerprint/1222/'
 cwd = '../dataset/'
-classes = ('train/', 'train_normal/', 'test/', 'test_normal/', 'mask/') #人为 设定 2 类
+classes = ('train/', 'train_normal/', 'test/', 'test_normal/', 'mask/')
 
-writer = tf.python_io.TFRecordWriter(cwd+"train.tfrecord") #要生成的文件
-for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # 生成训练集
-    img_path = cwd+classes[0]+img_name #每一个图片的地址
+writer = tf.python_io.TFRecordWriter(cwd+"train.tfrecord")
+for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # train
+    img_path = cwd+classes[0]+img_name
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 1))
+    img = img.resize((1024, 1024))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -32,9 +32,9 @@ for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # 生成训练集
     # print(img)
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
-    img_raw = img.tobytes()#将图片转化为二进制格式
+    img_raw = img.tobytes()
 
-    mask_path = cwd + classes[4] + img_name  # 每一个图片的地址
+    mask_path = cwd + classes[4] + img_name
     mask = Image.open(mask_path)
     mask = mask.resize((400, 400))
     mask_raw = mask.tobytes()
@@ -42,13 +42,13 @@ for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # 生成训练集
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
         'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
         'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw]))
-    })) #example对象对label和image数据进行封装
-    writer.write(example.SerializeToString())  #序列化为字符串
+    })) 
+    writer.write(example.SerializeToString())
     print("this is num %d" % i)
 for i, img_name in enumerate(os.listdir(cwd + classes[1])):
-    img_path = cwd + classes[1] + img_name  # 每一个图片的地址
+    img_path = cwd + classes[1] + img_name
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 1))
+    img = img.resize((1024, 1024))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -56,10 +56,10 @@ for i, img_name in enumerate(os.listdir(cwd + classes[1])):
     # print(img)
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
-    img_raw = img.tobytes()  # 将图片转化为二进制格式
+    img_raw = img.tobytes()
 
 
-    mask_path = cwd + classes[4] + img_name  # 每一个图片的地址
+    mask_path = cwd + classes[4] + img_name
     mask = Image.open(mask_path)
     mask = mask.resize((400, 400))
     mask_raw = mask.tobytes()
@@ -67,8 +67,8 @@ for i, img_name in enumerate(os.listdir(cwd + classes[1])):
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[0])),
         'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
         'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw]))
-    }))  # example对象对label和image数据进行封装
-    writer.write(example.SerializeToString())  # 序列化为字符串
+    }))
+    writer.write(example.SerializeToString())
     print("this is num %d" % i)
 writer.close()
 
@@ -76,48 +76,48 @@ print('train.tfrecord finished!')
 
 
 
-writer1 = tf.python_io.TFRecordWriter(cwd+"test.tfrecord") #要生成的文件
-for i, img_name in enumerate(os.listdir(cwd + classes[2])):  # 生成测试集
+writer1 = tf.python_io.TFRecordWriter(cwd+"test.tfrecord")
+for i, img_name in enumerate(os.listdir(cwd + classes[2])):  # test
     class_path = cwd + classes[2]
-    img_path = class_path+img_name #每一个图片的地址
+    img_path = class_path+img_name
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 1))
+    img = img.resize((1024, 1024))
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
-    img_raw = img.tobytes()#将图片转化为二进制格式
+    img_raw = img.tobytes()
 
     example = tf.train.Example(features=tf.train.Features(feature={
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
         'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
-    }))  # example对象对label和image数据进行封装
-    writer1.write(example.SerializeToString())  #序列化为字符串
+    }))
+    writer1.write(example.SerializeToString())
     print("this is num %d" % i)
 
 for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     class_path = cwd + classes[3]
-    img_path = class_path+img_name #每一个图片的地址
+    img_path = class_path+img_name
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 1))
+    img = img.resize((1024, 1024))
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
-    img_raw = img.tobytes()#将图片转化为二进制格式
+    img_raw = img.tobytes()
 
     example = tf.train.Example(features=tf.train.Features(feature={
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[0])),
         'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
-    }))  # example对象对label和image数据进行封装
-    writer1.write(example.SerializeToString())  #序列化为字符串
+    }))
+    writer1.write(example.SerializeToString())
     print("this is num %d" % i)
 writer1.close()
 
 print('test.tfrecord finished!')
 
 
-writer2 = tf.python_io.TFRecordWriter(cwd+"pre_train.tfrecord") #要生成的文件
-for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # 生成预测试集
-    img_path = cwd+classes[0]+img_name #每一个图片的地址
+writer2 = tf.python_io.TFRecordWriter(cwd+"pre_test.tfrecord")
+for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # pre_test
+    img_path = cwd+classes[0]+img_name
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 1))
+    img = img.resize((1024, 1024))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -125,9 +125,9 @@ for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # 生成预测试集
     # print(img)
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
-    img_raw = img.tobytes()#将图片转化为二进制格式
+    img_raw = img.tobytes()
 
-    mask_path = cwd + classes[4] + img_name  # 每一个图片的地址
+    mask_path = cwd + classes[4] + img_name
     mask = Image.open(mask_path)
     mask = mask.resize((400, 400))
     mask_raw = mask.tobytes()
@@ -135,13 +135,13 @@ for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # 生成预测试集
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
         'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
         'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw]))
-    })) #example对象对label和image数据进行封装
-    writer2.write(example.SerializeToString())  #序列化为字符串
+    }))
+    writer2.write(example.SerializeToString())
     print("this is num %d" % i)
 for i, img_name in enumerate(os.listdir(cwd + classes[3])):
-    img_path = cwd + classes[1] + img_name  # 每一个图片的地址
+    img_path = cwd + classes[1] + img_name
     img = Image.open(img_path)
-    img = img.resize((1024, 1024, 1))
+    img = img.resize((1024, 1024))
     # ImgMean = ImageStat.Stat(img).mean
     # ImgStd = ImageStat.Stat(img).stddev
     # print(ImgMean, ImgStd)
@@ -149,10 +149,10 @@ for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     # print(img)
     # resize input: The requested size in pixels, as a 2-tuple: (width, height).
     # won't change the dimension of the picture...
-    img_raw = img.tobytes()  # 将图片转化为二进制格式
+    img_raw = img.tobytes()
 
 
-    mask_path = cwd + classes[4] + img_name  # 每一个图片的地址
+    mask_path = cwd + classes[4] + img_name
     mask = Image.open(mask_path)
     mask = mask.resize((400, 400))
     mask_raw = mask.tobytes()
@@ -160,8 +160,8 @@ for i, img_name in enumerate(os.listdir(cwd + classes[3])):
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[0])),
         'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
         'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw]))
-    }))  # example对象对label和image数据进行封装
-    writer2.write(example.SerializeToString())  # 序列化为字符串
+    }))
+    writer2.write(example.SerializeToString())
     print("this is num %d" % i)
 writer2.close()
 

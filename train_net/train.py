@@ -6,25 +6,25 @@ wechat: lp9628
 blog: http://blog.csdn.net/u014365862/article/details/78422372
 """
 
-import numpy as np
+#import numpy as np
 import tensorflow as tf
 slim = tf.contrib.slim
-import argparse
+#import argparse
 import os
 os.path.append('../net/')
 from load_image.load_image import read_and_decode
 import config
-from PIL import Image
-from datetime import datetime
-import math
-import time
+#from PIL import Image
+#from datetime import datetime
+#import math
+#import time
 # import cv2
 from mask import model_copy
-from keras.utils import np_utils
+#from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-from load_image.load_image import load_database_path, get_next_batch_from_path, shuffle_train_data
+#from load_image.load_image import load_database_path, get_next_batch_from_path, shuffle_train_data
 # inception_v4
 from net.inception_v4.inception_v4 import inception_v4_arg_scope, inception_v4
 # resnet_v2_50, resnet_v2_101, resnet_v2_152, resnet_v2_200
@@ -244,7 +244,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     coord.join(threads)
     sess.close()
 
-def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
+def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
           checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
@@ -284,7 +284,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('../dataset/pre_test.tfrecord', epoch)
+    image_flow, label_flow, mask_flow = read_and_decode('../dataset/pre_test.tfrecord')
 
     img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
@@ -327,7 +327,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
     coord.join(threads)
     sess.close()
 
-def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
+def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
           checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
@@ -376,7 +376,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, epoch, batch_size=64,
         correct_pred = tf.equal(max_idx_p, max_idx_l)
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
-    image_flow, label_flow= read_and_decode('dataset/test.tfrecord', epoch)
+    image_flow, label_flow= read_and_decode('dataset/test.tfrecord')
 
     img_batch, label_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow], batch_size=batch_size,

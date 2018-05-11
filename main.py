@@ -6,21 +6,21 @@ wechat: lp9628
 blog: http://blog.csdn.net/u014365862/article/details/78422372
 """
 
-import numpy as np
+#import numpy as np
 import tensorflow as tf
 slim = tf.contrib.slim
-import argparse
+#import argparse
 import os
-from PIL import Image
-from datetime import datetime
-import math
-import time
-from load_image.load_image import load_database_path, get_next_batch_from_path
+#from PIL import Image
+#from datetime import datetime
+#import math
+#import time
+#from load_image.load_image import load_database_path, get_next_batch_from_path
 from train_net.train import train
-import os
-from keras.utils import np_utils
+#import os
+#from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import config
 # TODO:rewrite
 tf.app.flags.DEFINE_string('mode', 'train', "train or test")

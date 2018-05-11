@@ -110,7 +110,7 @@ def read_and_decode(filename, epoch=None,is_train=True):
                                                'img_raw': tf.FixedLenFeature([], tf.string),
                                            })  # 将image数据和label取出来
     img0 = tf.decode_raw(features['img_raw'], tf.uint8)
-    img0 = tf.reshape(img0, [1024, 1024, 3])  # reshape为128*128的1通道图片
+    img0 = tf.reshape(img0, [1024, 1024, 1])  # reshape为128*128的1通道图片
     img0 = tf.cast(img0, tf.float32)
     mean = tf.reduce_mean(img0)
     std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
