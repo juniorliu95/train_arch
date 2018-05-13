@@ -115,7 +115,7 @@ print('test.tfrecord finished!')
 
 writer2 = tf.python_io.TFRecordWriter(cwd+"pre_test.tfrecord")
 for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # pre_test
-    img_path = cwd+classes[0]+img_name
+    img_path = cwd+classes[2]+img_name
     img = Image.open(img_path)
     img = img.resize((1024, 1024))
     # ImgMean = ImageStat.Stat(img).mean
@@ -139,7 +139,7 @@ for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # pre_test
     writer2.write(example.SerializeToString())
     print("this is num %d" % i)
 for i, img_name in enumerate(os.listdir(cwd + classes[3])):
-    img_path = cwd + classes[1] + img_name
+    img_path = cwd + classes[3] + img_name
     img = Image.open(img_path)
     img = img.resize((1024, 1024))
     # ImgMean = ImageStat.Stat(img).mean
