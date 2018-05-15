@@ -312,7 +312,7 @@ def inception_v4(inputs, num_classes=None, is_training=True,
       else: 
         logits = net
         end_points = end_points
-    return logits, end_points
+    return net, end_points
 inception_v4.default_image_size = 299
 
 

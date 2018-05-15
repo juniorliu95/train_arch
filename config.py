@@ -10,19 +10,19 @@ blog: http://blog.csdn.net/u014365862/article/details/78422372
 # resnet_v2:224
 # vgg:224
 
-IMAGE_HEIGHT = 1024
-IMAGE_WIDTH = 1024
+IMAGE_HEIGHT = 224
+IMAGE_WIDTH = 224
 num_classes = 2
 # epoch
-epoch = 1000
-batch_size = 1
+epoch = 1
+batch_size = 2
 # 模型的学习率
 learning_rate = 0.00001
 keep_prob = 0.8
 
 # tfrecord 读取
 capacity = 10000
-min_after_dequeue = 3000
+min_after_dequeue = 500
 
 # 设置训练样本的占总样本的比例：
 train_rate = 0.9
@@ -35,12 +35,15 @@ craterDir = "sample_train"
 # arch_model="arch_resnet_v2_50"
 arch_model="vgg_19"
 #arch_model="arch_inception_v4"
-
+#arch_model='inception_resnet_v2'
 # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
 checkpoint_exclude_scopes = "Logits_out"
 
 # 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
 checkpoint_path = "../ckpt/" + arch_model + ".ckpt"
+
+nDatasTrain = 100000
+logdir = '../logs/m4d2a' 
 
 #训练好的模型参数在model文件夹下。
 

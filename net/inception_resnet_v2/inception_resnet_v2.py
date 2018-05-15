@@ -124,8 +124,8 @@ def inception_resnet_v2_base(inputs,
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
                         stride=1, padding='SAME'):
       # 149 x 149 x 32
-      net = slim.conv2d(inputs, 32, 3, stride=2, padding=padding,
-                        scope='Conv2d_1a_3x3')
+      net = slim.conv2d(inputs, 32, 3, stride=2, padding=padding,scope='Conv2d_1a_3x3')
+#      net = slim.repeat(inputs, 1, slim.conv2d, 64, [3, 3], scope='conv1')
       if add_and_check_final('Conv2d_1a_3x3', net): return net, end_points
 
       # 147 x 147 x 32
@@ -266,7 +266,7 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
                         dropout_keep_prob=0.8,
                         reuse=None,
                         scope='InceptionResnetV2',
-                        create_aux_logits=True,
+                        create_aux_logits=False,
                         mask=None):
   """Creates the Inception Resnet V2 model.
 
@@ -306,21 +306,7 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
                                      scope='Logits')
           end_points['AuxLogits'] = aux
 
-      with tf.variable_scope('Logits'):
-        net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
-                              scope='AvgPool_1a_8x8')
-        net = slim.flatten(net)
-
-        net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
-                           scope='Dropout')
-
-        end_points['PreLogitsFlatten'] = net
-        logits = slim.fully_connected(net, num_classes, activation_fn=None,
-                                      scope='Logits')
-        end_points['Logits'] = logits
-        end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
-
-    return logits, end_points
+    return net, end_points
 inception_resnet_v2.default_image_size = 299
 
 

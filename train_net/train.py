@@ -39,11 +39,13 @@ from net.inception_resnet_v2.inception_resnet_v2 import inception_resnet_v2_arg_
 def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
     arg_scope = inception_v4_arg_scope()
     with slim.arg_scope(arg_scope):
-        net, end_points = inception_v4(X, is_training=is_train,mask=mask)
+        net, end_points = inception_v4(X, dropout_keep_prob=dropout_keep_prob,is_training=is_train,mask=mask)  
+        # inputs, num_classes=None, is_training=True,dropout_keep_prob=0.8,reuse=None,scope='InceptionV4',create_aux_logits=True,mask=None
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
             # 8 x 8 x 1536
-            net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
+            print net.get_shape().as_list()
+            net = slim.avg_pool2d(net, [net.get_shape()[1],net.get_shape()[2]], padding='VALID',
                                       scope='AvgPool_1a_out')
             # 1 x 1 x 1536
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out')
@@ -57,13 +59,14 @@ def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50
     arg_scope = resnet_arg_scope()
     with slim.arg_scope(arg_scope):
         if name == 50:
-            net, end_points = resnet_v2_50(X, is_training=is_train, mask=mask)
+            net, end_points = resnet_v2_50(X, num_classes=num_classes,is_training=is_train, mask=mask)
+#inputs,num_classes=None,is_training=True,global_pool=True,output_stride=None,spatial_squeeze=True,reuse=None,scope='resnet_v2_50',mask=None
         elif name == 101:
-            net, end_points = resnet_v2_101(X, is_training=is_train, mask=mask)
+            net, end_points = resnet_v2_101(X, num_classes=num_classes,is_training=is_train, mask=mask)
         elif name == 152:
-            net, end_points = resnet_v2_152(X, is_training=is_train, mask=mask)
+            net, end_points = resnet_v2_152(X, num_classes=num_classes,is_training=is_train, mask=mask)
         elif name == 200:
-            net, end_points = resnet_v2_200(X, is_training=is_train, mask=mask)
+            net, end_points = resnet_v2_200(X, num_classes=num_classes,is_training=is_train, mask=mask)
         else:
             net, end_points = [], []
             assert("not exist layer num:", name)
@@ -82,15 +85,16 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
     arg_scope = vgg_arg_scope()
     with slim.arg_scope(arg_scope):
         if name == 16:
-            net, end_points = vgg_16(X, is_training=is_train)
+            net, end_points = vgg_16(X, is_training=is_train, dropout_keep_prob=dropout_keep_prob, mask=mask)
         elif name == 19:
-            net, end_points = vgg_19(X, is_training=is_train)
+            net, end_points = vgg_19(X, is_training=is_train, dropout_keep_prob=dropout_keep_prob, mask=mask)
         else:
             net, end_points = [], []
             assert ("not exist layer num:", name)
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
+            net = tf.reduce_mean(net,[1,2],keep_dims=True)
             net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,normalizer_fn=None,scope='fc8')
             net = tf.squeeze(net,[1,2], name='fc8/squeezed')
     return net
@@ -98,7 +102,20 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
 def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
     arg_scope = inception_resnet_v2_arg_scope()
     with slim.arg_scope(arg_scope):
-        net, end_points = inception_resnet_v2(X, is_training=is_train,num_classes=num_classes)
+        net, end_points = inception_resnet_v2(X, num_classes=num_classes, is_training=is_train, dropout_keep_prob=dropout_keep_prob, mask=mask)
+        with tf.variable_scope('Logits_out'):
+            net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
+                                  scope='AvgPool_1a_8x8')
+            net = slim.flatten(net)
+    
+            net = slim.dropout(net, dropout_keep_prob, is_training=is_train,
+                               scope='Dropout')
+    
+            end_points['PreLogitsFlatten'] = net
+            net = slim.fully_connected(net, num_classes, activation_fn=None,
+                                          scope='Logits')
+            end_points['Logits'] = net
+#            end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
     return net
 
 def g_parameter(checkpoint_exclude_scopes):
@@ -128,83 +145,93 @@ def g_parameter(checkpoint_exclude_scopes):
 
 def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
            arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="../ckpt/inception_v4/inception_v4.ckpt"):
+    is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
+    k_prob = tf.placeholder('float') # dropout
 
-    X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
-    #Y = tf.placeholder(tf.float32, [None, 4])
-    Y = tf.placeholder(tf.float32, [None, num_classes])
-    MASK = tf.placeholder(tf.float32, [None, 400, 400, 1])
-    is_training = tf.placeholder(tf.bool, name='is_training')
-    k_prob = tf.placeholder(tf.float32) # dropout
+    dataset_train = read_and_decode('../dataset/train.tfrecord', epoch,batch_size)
+    nBatchs = config.nDatasTrain*epoch//batch_size
+    iter_train = dataset_train.make_one_shot_iterator()
+    handle = tf.placeholder(tf.string, shape=[])  
+    iterator = tf.data.Iterator.from_string_handle(handle, dataset_train.output_types, dataset_train.output_shapes)  
+    img_batch, label_batch, mask_batch = iterator.get_next()
+    
+    img_batch = tf.image.resize_images(img_batch,[224,224])
+    if img_batch.get_shape().as_list()[-1] == 1:
+        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
-    # 定义模型
+    label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
+    print 'label size:' + str(label_batch.get_shape().as_list())
+    # setup models
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(X, num_classes, k_prob, is_training,mask=MASK)
-        model_path = '../model/inception_v4'
+        net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        model_path = '../model/inception_v4/inception_v4'
 
     elif arch_model == "arch_resnet_v2_50":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training, mask=MASK)
-        model_path = '../model/resnet_v2_50'
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        model_path = '../model/resnet_v2_50/resnet_v2_50'
         
     elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training, name=101, mask=MASK)
-        model_path = '../model/resnet_v2_101'
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        model_path = '../model/resnet_v2_101/resnet_v2_101'
         
     elif arch_model == "arch_resnet_v2_152":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=152, mask=MASK)
-        model_path = '../model/resnet_v2_152'
-        
-    elif arch_model == "arch_resnet_v2_200":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
-        model_path = '../model/resnet_v2_200'
-
-    elif arch_model == "vgg_16":
-        net = arch_vgg(X, num_classes, k_prob, is_training, mask=MASK)
-        model_path = '../model/vgg_16'
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        model_path = '../model/resnet_v2_152/resnet_v2_152'
+#        
+#    elif arch_model == "arch_resnet_v2_200":
+#        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
+#        model_path = '../model/resnet_v2_200'
+#
+#    elif arch_model == "vgg_16":
+#        net = arch_vgg(X, num_classes, k_prob, is_training, name=16, mask=MASK)
+#        model_path = '../model/vgg_16'
         
     elif arch_model == "vgg_19":
-        net = arch_vgg(X, num_classes, k_prob, is_training, name=19, mask=MASK)
-        model_path = '../model/vgg_19'
+        net = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
+        model_path = '../model/vgg_19/vgg_19'
         
     elif arch_model == "inception_resnet_v2":
-        net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
-        model_path = '../model/inception_resnet_v2'
+        net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        model_path = '../model/inception_resnet_v2/inception_resnet_v2'
         
     else:
         net = []
         model_path = '../model/'+arch_model
         assert(net == [], 'model not expected:'+ arch_model)
+        
+        
+    
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
-
     # loss function
-    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = Y, logits = net))
+    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
 
     var_list = variables_to_train
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, var_list=var_list)
+        train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, var_list=var_list)
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)
-    max_idx_l = tf.argmax(Y, 1)
+    max_idx_l = tf.argmax(label_batch, 1)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('../dataset/train.tfrecord', epoch)
+    
 
-    img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
-        ([image_flow, label_flow, mask_flow], batch_size=batch_size,
-         capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
-
-    if tf.shape(img_batch)[-1] == 1:
-        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
-
-    label_batch = tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=0)
-
-    sess = tf.Session()
+    def summary_op(datapart='train'):  
+        tf.summary.scalar(datapart + '-loss', loss)  
+        tf.summary.scalar(datapart + '-eval', accuracy)  
+        return tf.summary.merge_all() 
+    
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+    configgpu = tf.ConfigProto(allow_soft_placement=True,gpu_options=gpu_options)
+    configgpu.gpu_options.allow_growth = True 
+    sess = tf.Session(config=configgpu)
+    
     init = tf.global_variables_initializer()
     sess.run(init)
     sess.run(tf.local_variables_initializer())
-
+    
     saver2 = tf.train.Saver(tf.global_variables())
 
     net_vars = variables_to_restore
@@ -212,150 +239,126 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
     saver_net.restore(sess, checkpoint_path)
-
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-
-    i = 0
+    
+    handle_train = sess.run(iter_train.string_handle())  
+    
+    
+    summary_op_train = summary_op() 
+    summary_wrt = tf.summary.FileWriter(config.logdir,sess.graph)
+    
+    best_loss = 1e6
+    
     try:
-        while not coord.should_stop():
-    # for epoch_i in range(epoch):
-    #     for batch_i in range(int(train_n/batch_size)):
-            images_train, labels_train, masks_train = sess.run([img_batch, label_batch,mask_batch])
-            # images_train, labels_train = get_next_batch_from_path(train_data, train_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=True)
-
-            loss, _ = sess.run([loss,optimizer], feed_dict={X: images_train, Y: labels_train, k_prob:keep_prob, is_training:True, MASK:masks_train})
-            # print (los)
-
-            if i % 100 == 0:
-                # images_valid, labels_valid = get_next_batch_from_path(valid_data, valid_label, batch_i%(int(valid_n/batch_size)), IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=False)
-                ls, acc = sess.run([loss, accuracy], feed_dict={X: images_train, Y: labels_train, k_prob:1.0, is_training:False, MASK:masks_train})
-                print('Batch: {:>2}: Validation loss: {:>3.5f}, Validation accuracy: {:>3.5f}'.format(i, ls, acc))
-                #if acc > 0.90:
-                #    saver2.save(sess, model_path, global_step=batch_i, write_meta_graph=False)
-            # elif batch_i % 20 == 0:
-            #     loss_, acc_ = sess.run([loss, accuracy], feed_dict={X: images_train, Y: labels_train, k_prob:1.0, is_training:False,MASK:masks_train})
-            #     print('Batch: {:>2}: Training loss: {:>3.5f}, Training accuracy: {:>3.5f}'.format(batch_i, loss_, acc_))
-                
-        # print('Epoch===================================>: {:>2}'.format(epoch_i))
-        # valid_ls = 0
-        # valid_acc = 0
-        # for batch_i in range(int(valid_n/batch_size)):
-        #     images_valid, labels_valid = get_next_batch_from_path(valid_data, valid_label, batch_i, IMAGE_HEIGHT, IMAGE_WIDTH, batch_size=batch_size, is_train=False)
-        #     epoch_ls, epoch_acc = sess.run([loss, accuracy], feed_dict={X: images_valid, Y: labels_valid, k_prob:1.0, is_training:False})
-        #     valid_ls = valid_ls + epoch_ls
-        #     valid_acc = valid_acc + epoch_acc
-        # print('Epoch: {:>2}: Validation loss: {:>3.5f}, Validation accuracy: {:>3.5f}'.format(epoch_i, valid_ls/int(valid_n/batch_size), valid_acc/int(valid_n/batch_size)))
-        # if valid_acc/int(valid_n/batch_size) > 0.90:
-            i += 1
+        for i in range(0, nBatchs):    
+            _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
+                                                            feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )  
+            # log to stdout and eval validation set  
+            if i % 100 == 0 or i == nBatchs-1:  
+                saver2.save(sess, model_path, global_step=i) # save variables  
+                summary_wrt.add_summary(summary, global_step=i)  
+                cur_val_loss, cur_val_eval = sess.run([loss, accuracy],  
+                    feed_dict={handle: handle_train, is_training:False, k_prob: 1.0})  
+                if cur_val_loss < best_loss:  
+                    best_loss = cur_val_loss  
+                    best_step = i  
+                summary_wrt.add_summary(summary, global_step=i)  
+                print 'step %5d: loss %.5f, acc %.5f --- loss val %0.5f, acc val %.5f'%(i,   
+                    cur_loss, cur_train_eval, cur_val_loss, cur_val_eval)  
+                # sess.run(init_train)
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
     finally:
-    # When done, ask the threads to stop.
-    # test save
         saver2.save(sess, model_path, global_step=i, write_meta_graph=False)
-        coord.request_stop()
-    # Wait for threads to finish.
-    coord.join(threads)
+        with open(model_path+'best.step','w') as f:  
+            f.write('best step is %d\n'%best_step)  
+            print 'best step is %d'%best_step 
     sess.close()
 
 def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          model_path="../model/inception_v4/inception_v4.ckpt"):
-    X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
-    Y = tf.placeholder(tf.float32, [None, num_classes])
-    MASK = tf.placeholder(tf.float32, [None, 400, 400, 1])
-    k_prob = tf.placeholder(tf.float32)  # dropout
+          checkpoint_path="../model/inception_v4/inception_v4.ckpt"):
+    is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
+    k_prob = tf.placeholder('float') # dropout
+
+    dataset_test = read_and_decode('../dataset/test.tfrecord', 1,batch_size)
+    nBatchs = config.nDatasTrain//batch_size
+    iter_test = dataset_test.make_one_shot_iterator()
+    handle = tf.placeholder(tf.string, shape=[])  
+    iterator = tf.data.Iterator.from_string_handle(handle, dataset_test.output_types, dataset_test.output_shapes)  
+    img_batch, label_batch, mask_batch = iterator.get_next()
     
-    is_training = False
-    # 定义模型
+    img_batch = tf.image.resize_images(img_batch,[224,224])
+    if img_batch.get_shape().as_list()[-1] == 1:
+        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
+
+    label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
+    print 'label size:' + str(label_batch.get_shape().as_list())
+    # setup models
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(X, num_classes, k_prob, is_training,mask=MASK)
-        model_path = '../model/inception_v4'
+        net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
 
     elif arch_model == "arch_resnet_v2_50":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training, mask=MASK)
-        model_path = '../model/resnet_v2_50'
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training, name=101, mask=MASK)
-        model_path = '../model/resnet_v2_101'
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     elif arch_model == "arch_resnet_v2_152":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=152, mask=MASK)
-        model_path = '../model/resnet_v2_152'
-        
-    elif arch_model == "arch_resnet_v2_200":
-        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
-        model_path = '../model/resnet_v2_200'
-
-    elif arch_model == "vgg_16":
-        net = arch_vgg(X, num_classes, k_prob, is_training, mask=MASK)
-        model_path = '../model/vgg_16'
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+#        
+#    elif arch_model == "arch_resnet_v2_200":
+#        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
+#
+#    elif arch_model == "vgg_16":
+#        net = arch_vgg(X, num_classes, k_prob, is_training, name=16, mask=MASK)
         
     elif arch_model == "vgg_19":
-        net = arch_vgg(X, num_classes, k_prob, is_training, name=19, mask=MASK)
-        model_path = '../model/vgg_19'
+        net = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
         
     elif arch_model == "inception_resnet_v2":
-        net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
-        model_path = '../model/inception_resnet_v2'
+        net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     else:
         net = []
-        model_path = '../model/'+arch_model
-        assert ('model not expected:', arch_model)
-    variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
-
-    var_list = variables_to_train
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        assert(net == [], 'model not expected:'+ arch_model)
+        
+        
+    
+    variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
+    
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)
-    max_idx_l = tf.argmax(Y, 1)
+    max_idx_l = tf.argmax(label_batch, 1)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-    # ------------------------------------------------------------------------------------#
-    image_flow, label_flow, mask_flow = read_and_decode('../dataset/pre_test.tfrecord')
-
-    img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
-        ([image_flow, label_flow, mask_flow], batch_size=batch_size,
-         capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
-
-    if tf.shape(img_batch)[-1] == 1:
-        img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
-
-    label_batch = tf.one_hot(label_batch, num_classes, on_value=1, axis=0)
-
-    sess = tf.Session()
+    #------------------------------------------------------------------------------------#
+    
+    
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+    configgpu = tf.ConfigProto(allow_soft_placement=True,gpu_options=gpu_options)
+    configgpu.gpu_options.allow_growth = True 
+    sess = tf.Session(config=configgpu)
+    
     init = tf.global_variables_initializer()
     sess.run(init)
     sess.run(tf.local_variables_initializer())
-
+    
     net_vars = variables_to_restore
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
-    saver_net.restore(sess, model_path)
+    saver_net.restore(sess, checkpoint_path)
+    
+    handle_test = sess.run(iter_test.string_handle())  
 
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-
-    i = 0
+    
     try:
-        while not coord.should_stop():
-            # for epoch_i in range(epoch):
-            #     for batch_i in range(int(train_n/batch_size)):
-            images_train, labels_train, masks_train = sess.run([img_batch, label_batch, mask_batch])
-
-            acc = sess.run(accuracy, feed_dict={X: images_train, Y: labels_train, k_prob: 1.0, MASK: MASK})
-            print('Batch: {:>2}: Validation accuracy: {:>3.5f}'.format(i, acc))
-            i += 1
+        for i in range(0, nBatchs):    
+            cur_test_eval = sess.run(accuracy,feed_dict={handle: handle_test, is_training:False, k_prob: 1.0} )   
+            print 'step %5d: acc %.5f'%(i, cur_test_eval)
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
-    finally:
-        coord.request_stop()
-    # Wait for threads to finish.
-    coord.join(threads)
+
     sess.close()
 
 def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
@@ -406,7 +409,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             model_path = '../model/vgg_19'
             
         elif arch_model == "inception_resnet_v2":
-            net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
+            net = arch_inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
             model_path = '../model/inception_resnet_v2'
             
         else:
@@ -473,7 +476,7 @@ if __name__ == '__main__':
     num_classes = 2
     # epoch
     epoch = 100
-    batch_size = 4
+    batch_size = 1
     # 模型的学习率
     learning_rate = 0.00001
     keep_prob = 0.8

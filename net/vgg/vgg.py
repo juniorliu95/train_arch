@@ -157,6 +157,7 @@ def vgg_16(inputs,
 
       # Use conv2d instead of fully_connected layers.
       net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
+#      net = slim.conv2d(net, 4096, [32, 32], padding=fc_conv_padding, scope='fc61')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
@@ -230,15 +231,17 @@ def vgg_19(inputs,
 
       depth = tf.shape(net)[-1]
       change = tf.ones([1, 1, 1, depth])
-      mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
-      mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
-      mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))
-      mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
-      mask_use = tf.stop_gradient(mask_end)
-      net = mask_use * net
+      if mask != None:
+          mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
+          mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
+          mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))
+          mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+          mask_use = tf.stop_gradient(mask_end)
+          net = mask_use * net
 
       # Use conv2d instead of fully_connected layers.
       net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
+#      net = slim.conv2d(net, 4096, [32, 32], padding=fc_conv_padding, scope='fc61')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')

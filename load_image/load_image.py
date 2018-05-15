@@ -8,7 +8,6 @@ blog: http://blog.csdn.net/u014365862/article/details/78422372
 
 import numpy as np  
 import tensorflow as tf
-import numpy as np
 import os
 from PIL import Image
 import cv2
@@ -89,40 +88,79 @@ def get_next_batch_from_path(image_path, image_labels, pointer, IMAGE_HEIGHT=299
         batch_y[i] = image_labels[i+pointer*batch_size]
     return batch_x, batch_y
 
+##read tfrecord file
+#def read_and_decode(filename, epoch=None,is_train=True, has_mask=True):
+#    filename_queue = tf.train.string_input_producer\
+#        ([filename], num_epochs=epoch, shuffle=True)#生成一个random queue队列
+#    reader = tf.TFRecordReader()
+#    _, serialized_example = reader.read(filename_queue)#返回文件名和文件
+#
+#    if has_mask:
+#        features = tf.parse_single_example(serialized_example,
+#                                           features={
+#                                               'label': tf.FixedLenFeature([], tf.int64),
+#                                               'img_raw': tf.FixedLenFeature([], tf.string),
+#                                               'mask': tf.FixedLenFeature([], tf.string)
+#                                           })  # 将image数据和label取出来
+#    else:
+#        features = tf.parse_single_example(serialized_example,
+#                                           features={
+#                                               'label': tf.FixedLenFeature([], tf.int64),
+#                                               'img_raw': tf.FixedLenFeature([], tf.string),
+#                                           })  # 将image数据和label取出来
+#    img0 = tf.decode_raw(features['img_raw'], tf.uint8)
+#    img0 = tf.reshape(img0, [1024, 1024, 1])  # reshape为128*128的1通道图片
+#    img0 = tf.cast(img0, tf.float32)
+#    mean = tf.reduce_mean(img0)
+#    std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
+#    img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
+#    label = features['label'] # 在流中抛出label张量
+#    label = tf.cast(label, tf.float32)
+#    if has_mask:
+#        mask0 = tf.decode_raw(features['mask'], tf.uint8)
+#        mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
+#        mask0 = tf.cast(mask0, tf.float32)
+#        return img0,label,mask0
+#    return img0, label
+    
 #read tfrecord file
-def read_and_decode(filename, epoch=None,is_train=True, has_mask=True):
-    filename_queue = tf.train.string_input_producer\
-        ([filename], num_epochs=epoch, shuffle=True)#生成一个random queue队列
-    reader = tf.TFRecordReader()
-    _, serialized_example = reader.read(filename_queue)#返回文件名和文件
-
-    if has_mask:
-        features = tf.parse_single_example(serialized_example,
-                                           features={
-                                               'label': tf.FixedLenFeature([], tf.int64),
-                                               'img_raw': tf.FixedLenFeature([], tf.string),
-                                               'mask': tf.FixedLenFeature([], tf.string)
-                                           })  # 将image数据和label取出来
-    else:
-        features = tf.parse_single_example(serialized_example,
-                                           features={
-                                               'label': tf.FixedLenFeature([], tf.int64),
-                                               'img_raw': tf.FixedLenFeature([], tf.string),
-                                           })  # 将image数据和label取出来
-    img0 = tf.decode_raw(features['img_raw'], tf.uint8)
-    img0 = tf.reshape(img0, [1024, 1024, 1])  # reshape为128*128的1通道图片
-    img0 = tf.cast(img0, tf.float32)
-    mean = tf.reduce_mean(img0)
-    std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
-    img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
-    label = features['label'] # 在流中抛出label张量
-    label = tf.cast(label, tf.float32)
-    if has_mask:
-        mask0 = tf.decode_raw(features['mask'], tf.uint8)
-        mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
-        mask0 = tf.cast(mask0, tf.float32)
-        return img0,label,mask0
-    return img0, label
+def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=True):
+    
+    def get_dataset(fname):  
+        dataset = tf.data.TFRecordDataset(filename)  
+        return dataset.map(parse_exmp)
+    
+    def parse_exmp(serial_exmp): 
+        if has_mask:
+            features = tf.parse_single_example(serial_exmp,
+                                               features={
+                                                   'label': tf.FixedLenFeature([], tf.int64),
+                                                   'img_raw': tf.FixedLenFeature([], tf.string),
+                                                   'mask': tf.FixedLenFeature([], tf.string)
+                                               })  # 将image数据和label取出来
+        else:
+            features = tf.parse_single_example(serial_exmp,
+                                               features={
+                                                   'label': tf.FixedLenFeature([], tf.int64),
+                                                   'img_raw': tf.FixedLenFeature([], tf.string),
+                                               })  # 将image数据和label取出来
+        img0 = tf.decode_raw(features['img_raw'], tf.uint8)
+        img0 = tf.reshape(img0, [1024, 1024, 1])  # reshape为128*128的1通道图片
+        img0 = tf.cast(img0, tf.float32)
+        mean = tf.reduce_mean(img0)
+        std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
+        img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
+        label = features['label'] # 在流中抛出label张量
+        label = tf.cast(label, tf.float32)
+        if has_mask:
+            mask0 = tf.decode_raw(features['mask'], tf.uint8)
+            mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
+            mask0 = tf.cast(mask0, tf.float32)
+            return img0,label,mask0
+        return img0, label
+    dataset_train = get_dataset(filename)  
+    dataset_train = dataset_train.repeat(epochs).shuffle(1000).batch(batch_size)
+    return dataset_train
 
 
 def test():
