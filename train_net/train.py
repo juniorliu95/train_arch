@@ -10,8 +10,8 @@ blog: http://blog.csdn.net/u014365862/article/details/78422372
 import tensorflow as tf
 slim = tf.contrib.slim
 #import argparse
-import os
-os.path.append('../net/')
+#import sys
+#sys.path.append('../net/')
 from load_image.load_image import read_and_decode
 import config
 #from PIL import Image
@@ -21,6 +21,7 @@ import config
 # import cv2
 from mask import model_copy
 #from keras.utils import np_utils
+import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -138,25 +139,40 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     # 定义模型
     if arch_model == "arch_inception_v4":
         net = arch_inception_v4(X, num_classes, k_prob, is_training,mask=MASK)
+        model_path = '../model/inception_v4'
 
     elif arch_model == "arch_resnet_v2_50":
         net = arch_resnet_v2(X, num_classes, k_prob, is_training, mask=MASK)
+        model_path = '../model/resnet_v2_50'
+        
     elif arch_model == "arch_resnet_v2_101":
         net = arch_resnet_v2(X, num_classes, k_prob, is_training, name=101, mask=MASK)
+        model_path = '../model/resnet_v2_101'
+        
     elif arch_model == "arch_resnet_v2_152":
         net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=152, mask=MASK)
+        model_path = '../model/resnet_v2_152'
+        
     elif arch_model == "arch_resnet_v2_200":
         net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
+        model_path = '../model/resnet_v2_200'
 
     elif arch_model == "vgg_16":
         net = arch_vgg(X, num_classes, k_prob, is_training, mask=MASK)
+        model_path = '../model/vgg_16'
+        
     elif arch_model == "vgg_19":
         net = arch_vgg(X, num_classes, k_prob, is_training, name=19, mask=MASK)
+        model_path = '../model/vgg_19'
+        
     elif arch_model == "inception_resnet_v2":
         net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
+        model_path = '../model/inception_resnet_v2'
+        
     else:
         net = []
-        assert('model not expected:',arch_model)
+        model_path = '../model/'+arch_model
+        assert(net == [], 'model not expected:'+ arch_model)
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
 
     # loss function
@@ -175,14 +191,14 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     #------------------------------------------------------------------------------------#
     image_flow, label_flow, mask_flow = read_and_decode('../dataset/train.tfrecord', epoch)
 
-    img_batch, label_batch,mask_batch = tf.train.shuffle_batch \
+    img_batch, label_batch, mask_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow, mask_flow], batch_size=batch_size,
          capacity=config.capacity, min_after_dequeue=config.min_after_dequeue)
 
     if tf.shape(img_batch)[-1] == 1:
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
-    label_batch = tf.one_hot(label_batch, num_classes, on_value=1, axis=0)
+    label_batch = tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=0)
 
     sess = tf.Session()
     init = tf.global_variables_initializer()
@@ -190,7 +206,6 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     sess.run(tf.local_variables_initializer())
 
     saver2 = tf.train.Saver(tf.global_variables())
-    model_path = '../model/fine-tune'
 
     net_vars = variables_to_restore
     saver_net = tf.train.Saver(net_vars)
@@ -246,33 +261,49 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
 def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
+          model_path="../model/inception_v4/inception_v4.ckpt"):
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     Y = tf.placeholder(tf.float32, [None, num_classes])
     MASK = tf.placeholder(tf.float32, [None, 400, 400, 1])
     k_prob = tf.placeholder(tf.float32)  # dropout
-
+    
+    is_training = False
     # 定义模型
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(X, num_classes, k_prob,mask=MASK)
+        net = arch_inception_v4(X, num_classes, k_prob, is_training,mask=MASK)
+        model_path = '../model/inception_v4'
 
     elif arch_model == "arch_resnet_v2_50":
-        net = arch_resnet_v2(X, num_classes, k_prob, mask=MASK)
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training, mask=MASK)
+        model_path = '../model/resnet_v2_50'
+        
     elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(X, num_classes, k_prob, name=101, mask=MASK)
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training, name=101, mask=MASK)
+        model_path = '../model/resnet_v2_101'
+        
     elif arch_model == "arch_resnet_v2_152":
-        net = arch_resnet_v2(X, num_classes, k_prob, name=152, mask=MASK)
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=152, mask=MASK)
+        model_path = '../model/resnet_v2_152'
+        
     elif arch_model == "arch_resnet_v2_200":
-        net = arch_resnet_v2(X, num_classes, k_prob, name=200, mask=MASK)
+        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
+        model_path = '../model/resnet_v2_200'
 
     elif arch_model == "vgg_16":
-        net = arch_vgg(X, num_classes, k_prob, mask=MASK)
+        net = arch_vgg(X, num_classes, k_prob, is_training, mask=MASK)
+        model_path = '../model/vgg_16'
+        
     elif arch_model == "vgg_19":
-        net = arch_vgg(X, num_classes, k_prob, name=19, mask=MASK)
+        net = arch_vgg(X, num_classes, k_prob, is_training, name=19, mask=MASK)
+        model_path = '../model/vgg_19'
+        
     elif arch_model == "inception_resnet_v2":
-        net = inception_resnet_v2(X, num_classes, k_prob, mask=MASK)
+        net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
+        model_path = '../model/inception_resnet_v2'
+        
     else:
         net = []
+        model_path = '../model/'+arch_model
         assert ('model not expected:', arch_model)
     variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
 
@@ -304,7 +335,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
-    saver_net.restore(sess, checkpoint_path)
+    saver_net.restore(sess, model_path)
 
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
@@ -329,7 +360,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 
 def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"):
+          model_path="../model/inception_v4/inception_v4.ckpt"):
     X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, 3])
     Y = tf.placeholder(tf.float32, [None, num_classes])
 # TODO: get mask interface
@@ -339,32 +370,48 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     images_input_test = images_input[0]
     # images_input_test = X[-1, IMAGE_HEIGHT, IMAGE_WIDTH, 0]
     images_input_test = tf.image.resize_images(images_input_test, [400, 400])
-    mask = model_copy.predict(filename, images_input_test, chkpt_path, batch_size)
+    mask = model_copy.predict(images_input_test, chkpt_path, batch_size)
     MASK = mask
     k_prob = tf.placeholder(tf.float32)  # dropout
-
+    
+    is_training = False
     # 定义模型
     with tf.device('gpu:0'):
         if arch_model == "arch_inception_v4":
-            net = arch_inception_v4(X, num_classes, k_prob,mask=MASK)
+            net = arch_inception_v4(X, num_classes, k_prob, is_training,mask=MASK)
+            model_path = '../model/inception_v4'
 
         elif arch_model == "arch_resnet_v2_50":
-            net = arch_resnet_v2(X, num_classes, k_prob, mask=MASK)
+            net = arch_resnet_v2(X, num_classes, k_prob, is_training, mask=MASK)
+            model_path = '../model/resnet_v2_50'
+            
         elif arch_model == "arch_resnet_v2_101":
-            net = arch_resnet_v2(X, num_classes, k_prob, name=101, mask=MASK)
+            net = arch_resnet_v2(X, num_classes, k_prob, is_training, name=101, mask=MASK)
+            model_path = '../model/resnet_v2_101'
+            
         elif arch_model == "arch_resnet_v2_152":
-            net = arch_resnet_v2(X, num_classes, k_prob, name=152, mask=MASK)
+            net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=152, mask=MASK)
+            model_path = '../model/resnet_v2_152'
+            
         elif arch_model == "arch_resnet_v2_200":
-            net = arch_resnet_v2(X, num_classes, k_prob, name=200, mask=MASK)
-
+            net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
+            model_path = '../model/resnet_v2_200'
+    
         elif arch_model == "vgg_16":
-            net = arch_vgg(X, num_classes, k_prob, mask=MASK)
+            net = arch_vgg(X, num_classes, k_prob, is_training, mask=MASK)
+            model_path = '../model/vgg_16'
+            
         elif arch_model == "vgg_19":
-            net = arch_vgg(X, num_classes, k_prob, name=19, mask=MASK)
+            net = arch_vgg(X, num_classes, k_prob, is_training, name=19, mask=MASK)
+            model_path = '../model/vgg_19'
+            
         elif arch_model == "inception_resnet_v2":
-            net = inception_resnet_v2(X, num_classes, k_prob, mask=MASK)
+            net = inception_resnet_v2(X, num_classes, is_training, k_prob, mask=MASK)
+            model_path = '../model/inception_resnet_v2'
+            
         else:
             net = []
+            model_path = '../model/'+arch_model
             assert ('model not expected:', arch_model)
         variables_to_restore, variables_to_train = g_parameter(checkpoint_exclude_scopes)
 
@@ -376,7 +423,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         correct_pred = tf.equal(max_idx_p, max_idx_l)
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     # ------------------------------------------------------------------------------------#
-    image_flow, label_flow= read_and_decode('dataset/test.tfrecord')
+    image_flow, label_flow= read_and_decode('dataset/test.tfrecord', has_mask=False)
 
     img_batch, label_batch = tf.train.shuffle_batch \
         ([image_flow, label_flow], batch_size=batch_size,
@@ -396,7 +443,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
-    saver_net.restore(sess, checkpoint_path)
+    saver_net.restore(sess, model_path)
 
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
@@ -435,7 +482,7 @@ if __name__ == '__main__':
     ##----------------------------------------------------------------------------##
     arch_model="arch_inception_v4"
     checkpoint_exclude_scopes = "Logits_out"
-    checkpoint_path="pretrain/inception_v4/inception_v4.ckpt"
+    checkpoint_path="../ckpt/inception_v4.ckpt"
     print ("-----------------------------train.py start--------------------------")
     train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
           arch_model,checkpoint_exclude_scopes, checkpoint_path)

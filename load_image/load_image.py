@@ -90,13 +90,13 @@ def get_next_batch_from_path(image_path, image_labels, pointer, IMAGE_HEIGHT=299
     return batch_x, batch_y
 
 #read tfrecord file
-def read_and_decode(filename, epoch=None,is_train=True):
+def read_and_decode(filename, epoch=None,is_train=True, has_mask=True):
     filename_queue = tf.train.string_input_producer\
         ([filename], num_epochs=epoch, shuffle=True)#生成一个random queue队列
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)#返回文件名和文件
 
-    if is_train:
+    if has_mask:
         features = tf.parse_single_example(serialized_example,
                                            features={
                                                'label': tf.FixedLenFeature([], tf.int64),
@@ -117,8 +117,8 @@ def read_and_decode(filename, epoch=None,is_train=True):
     img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
     label = features['label'] # 在流中抛出label张量
     label = tf.cast(label, tf.float32)
-    if is_train:
-        mask0 = tf.decode_raw(features['img_raw'], tf.uint8)
+    if has_mask:
+        mask0 = tf.decode_raw(features['mask'], tf.uint8)
         mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
         mask0 = tf.cast(mask0, tf.float32)
         return img0,label,mask0

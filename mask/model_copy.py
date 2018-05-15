@@ -309,7 +309,7 @@ def train_eval(num_files, epochs, eval_every, batch_size, images_arrays, masks_a
 
 
 
-def predict(filename, images_arrays, chkpt_path, batch_size):
+def predict(images_arrays, chkpt_path, batch_size):
     num_test = len(images_arrays)
     pred_masks = [] 
     with tf.Session() as sess:

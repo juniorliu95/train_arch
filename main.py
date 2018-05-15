@@ -16,17 +16,15 @@ import os
 #import math
 #import time
 #from load_image.load_image import load_database_path, get_next_batch_from_path
-from train_net.train import train
-#import os
+from train_net.train import train, pre_test, test
+#import os 
 #from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import config
 # TODO:rewrite
-tf.app.flags.DEFINE_string('mode', 'train', "train or test")
-tf.app.flags.DEFINE_integer('network', 'vgg_19', "choose basic network")
-tf.app.flags.DEFINE_boolean('bool_name', False, "descript3")
 
+tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test")
 FLAGS = tf.app.flags.FLAGS
 
 def main(_):
@@ -49,10 +47,17 @@ def main(_):
     # 迁移学习模型参数
     checkpoint_path=config.checkpoint_path
     
-
-    print ("-----------------------------train.py start--------------------------")
-    train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
-          arch_model, checkpoint_exclude_scopes, checkpoint_path)
-
+    if FLAGS.mode == 'train':
+        print ("-----------------------------train start--------------------------")
+        train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
+              arch_model, checkpoint_exclude_scopes, checkpoint_path)
+    elif FLAGS.mode == 'pre_test':
+        print ("-----------------------------pre_test start--------------------------")
+        pre_test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,
+              arch_model, checkpoint_exclude_scopes, checkpoint_path)
+    elif FLAGS.mode == 'test':
+        print ("-----------------------------test start--------------------------")
+        test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,
+              arch_model, checkpoint_exclude_scopes, checkpoint_path)
 if __name__ == '__main__':
     tf.app.run()
