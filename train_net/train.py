@@ -280,7 +280,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/test.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTrain//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
@@ -292,7 +292,6 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
     label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
-    print 'label size:' + str(label_batch.get_shape().as_list())
     # setup models
     if arch_model == "arch_inception_v4":
         net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
@@ -324,7 +323,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         
         
     
-    variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
+    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes)
     
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)
