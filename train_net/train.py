@@ -162,8 +162,8 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     dataset_val = read_and_decode('../dataset/val.tfrecord', 1,1)
     iter_val   = dataset_val.make_one_shot_iterator()
     
-    
-#    img_batch = tf.image.resize_images(img_batch,[224,224])
+    if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
+        img_batch = tf.image.resize_images(img_batch,[IMAGE_HEIGHT,IMAGE_WIDTH])
     if img_batch.get_shape().as_list()[-1] == 1:
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
@@ -298,7 +298,9 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_test.output_types, dataset_test.output_shapes)  
     img_batch, label_batch, mask_batch = iterator.get_next()
     
-    img_batch = tf.image.resize_images(img_batch,[224,224])
+    if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
+        img_batch = tf.image.resize_images(img_batch,[IMAGE_HEIGHT,IMAGE_WIDTH])
+        
     if img_batch.get_shape().as_list()[-1] == 1:
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
@@ -385,6 +387,9 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_test.output_types, dataset_test.output_shapes)  
     img_batch, label_batch = iterator.get_next()
     
+    if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
+        img_batch = tf.image.resize_images(img_batch,[IMAGE_HEIGHT,IMAGE_WIDTH])
+    
     # TODO: get mask interface
     filename = "../mask_ckpt/"  # 修改
     chkpt_path = filename + "checkpoints/2018-04-19-1499"
@@ -427,8 +432,8 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     else:
-        net = []
-        assert(net == [], 'model not expected:'+ arch_model)
+        net = None
+        assert(net == None, 'model not expected:'+ arch_model)
         
         
     

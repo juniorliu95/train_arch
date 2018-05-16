@@ -10,8 +10,8 @@ blog: http://blog.csdn.net/u014365862/article/details/78422372
 # resnet_v2:224
 # vgg:224
 
-IMAGE_HEIGHT = 224
-IMAGE_WIDTH = 224
+IMAGE_HEIGHT = 1024
+IMAGE_WIDTH = 1024
 num_classes = 2
 # epoch
 epoch = 1
