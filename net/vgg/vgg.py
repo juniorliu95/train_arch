@@ -145,15 +145,15 @@ def vgg_16(inputs,
       net = slim.max_pool2d(net, [2, 2], scope='pool4')
       net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
-
-      depth = tf.shape(net)[-1]
-      change = tf.ones([1, 1, 1, depth])
-      mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
-      mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
-      mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))
-      mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
-      mask_use = tf.stop_gradient(mask_end)
-      net = mask_use * net
+      if mask is not None:
+          depth = tf.shape(net)[-1]
+          change = tf.ones([1, 1, 1, depth])
+          mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
+          mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
+          mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))
+          mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+          mask_use = tf.stop_gradient(mask_end)
+          net = mask_use * net
 
       # Use conv2d instead of fully_connected layers.
       net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
@@ -231,7 +231,7 @@ def vgg_19(inputs,
 
       depth = tf.shape(net)[-1]
       change = tf.ones([1, 1, 1, depth])
-      if mask != None:
+      if mask is not None:
           mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
           mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
           mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))

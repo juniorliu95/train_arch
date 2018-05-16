@@ -250,12 +250,13 @@ def inception_resnet_v2_base(inputs,
 
       depth = tf.shape(net)[-1]
       change = tf.ones([1, 1, 1, depth])
-      mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
-      mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
-      mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))
-      mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
-      mask_use = tf.stop_gradient(mask_end)
-      net = mask_use * net
+      if mask is not None:
+          mask = tf.image.convert_image_dtype(mask,tf.float32)  # change to [0,1)
+          mask = tf.image.resize_images(mask, [tf.shape(net)[1],tf.shape(net)[2]])
+          mask = tf.where(mask > 0.5, tf.ones([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]), tf.zeros([tf.shape(mask)[0],tf.shape(net)[1],tf.shape(net)[2],1]))
+          mask_end = tf.nn.conv2d(mask, change, strides=[1, 1, 1, 1], padding='SAME')
+          mask_use = tf.stop_gradient(mask_end)
+          net = mask_use * net
 
       if add_and_check_final('Conv2d_7b_1x1', net): return net, end_points
 

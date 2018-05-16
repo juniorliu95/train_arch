@@ -31,11 +31,14 @@ train_rate = 0.9
 craterDir = "sample_train"
 
 # 选择需要的模型
-# arch_model="arch_inception_v4";
-# arch_model="arch_resnet_v2_50"
-arch_model="vgg_19"
+#arch_model="arch_inception_v4";
+#arch_model="arch_resnet_v2_50"
+#arch_model="arch_resnet_v2_101"
+#arch_model="arch_resnet_v2_152"
+#arch_model="vgg_19"
 #arch_model="arch_inception_v4"
-#arch_model='inception_resnet_v2'
+arch_model='inception_resnet_v2'
+
 # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
 checkpoint_exclude_scopes = "Logits_out"
 
