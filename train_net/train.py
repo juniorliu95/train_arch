@@ -6,7 +6,7 @@ Created on 2017 10.17
 
 """
 
-#import numpy as np
+import numpy as np
 import tensorflow as tf
 slim = tf.contrib.slim
 #import argparse
@@ -14,11 +14,12 @@ slim = tf.contrib.slim
 #sys.path.append('../net/')
 from load_image.load_image import read_and_decode
 import config
-#from PIL import Image
+import froc
+from PIL import Image
 #from datetime import datetime
 #import math
 #import time
-# import cv2
+import cv2
 from mask import model_copy
 #from keras.utils import np_utils
 import time
@@ -292,11 +293,12 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     k_prob = tf.placeholder('float') # dropout
 
     dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
-    nBatchs = config.nDatasTrain//batch_size
+    nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_test.output_types, dataset_test.output_shapes)  
-    img_batch, label_batch, mask_batch = iterator.get_next()
+    img_batch, label_batch, mask_batch = iterator.get_next()  
+    # get a  new batch for each call
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
         img_batch = tf.image.resize_images(img_batch,[IMAGE_HEIGHT,IMAGE_WIDTH])
@@ -339,7 +341,8 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes)
     
     predict = tf.reshape(net, [-1, num_classes])
-    max_idx_p = tf.argmax(predict, 1)
+    predict_s = tf.nn.sigmoid(predict)
+    max_idx_p = tf.argmax(predict_s, 1)
     max_idx_l = tf.argmax(label_batch, 1)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
@@ -351,8 +354,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     configgpu.gpu_options.allow_growth = True 
     sess = tf.Session(config=configgpu)
     
-    init = tf.global_variables_initializer()
-    sess.run(init)
+    sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
     
     net_vars = variables_to_restore
@@ -362,14 +364,92 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     saver_net.restore(sess, checkpoint_path)
     
     handle_test = sess.run(iter_test.string_handle())  
-
     
+    
+    threshold = np.divide(range(10,101), 100.)
+    tp = []
+    tn = []
+    fp = []
+    fn = []
+    points = []
+    gts = []
     try:
-        for i in range(0, nBatchs):    
-            cur_test_eval = sess.run(accuracy,feed_dict={handle: handle_test, is_training:False, k_prob: 1.0} )   
-            print 'step %5d: acc %.5f'%(i, cur_test_eval)
+        for i in range(0, nBatchs):
+            start_time = time.time()
+            output,label_out = sess.run([predict_s,label_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
+            cur_test_eval = sess.run(accuracy,feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
+            end_time = time.time()
+            test_time = end_time - start_time
+            print 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
+            
+#            img_out,label_out,mask_out = sess.run([img_batch,label_batch,mask_batch], feed_dict={handle:handle_test})
+#            img_out = np.reshape(img_out,[400,400,1])
+#            a = np.uint8(img_out)
+#            cv2.imshow('',a)
+#            cv2.waitKey()
+#            cv2.destroyAllWindows()
+#            print output[0][1]
+#            print label_out[0][1]
+            
+            points.append(output[0][1])
+            gts.append(label_out[0][1])
+        
+        # P-R curve
+        precision = []
+        recall = []
+        for j in range(len(threshold)):
+            tp_temp = 0.
+            tn_temp = 0.
+            fn_temp = 0.
+            fp_temp = 0.
+            for k in range(len(points)):
+                if points[k] > threshold[j]:
+                    if gts[k] == 1:
+                        tp_temp += 1
+                    else: fp_temp += 1
+                else:
+                    if gts[k] == 0:
+                        tn_temp += 1
+                    else: fn_temp += 1
+            pre = tp_temp/(tp_temp + fp_temp + 1e-6)
+            rec = tp_temp/(tp_temp + fn_temp + 1e-6)
+            if precision>0:
+                precision.append(pre)
+                recall.append(rec)
+            print 'threshold:', threshold[j]
+#            print tp_temp,tn_temp,fp_temp,fn_temp
+            print 'precision:',pre,'recall:', rec
+        froc.plotFROC(recall,precision,np.divide(range(10,101),100.), 'P-R.pdf',False)
+
+        # fROC curve
+        sensitivity = []
+        fp_perframe = []
+        for j in range(len(threshold)):
+            tp_temp = 0.
+            tn_temp = 0.
+            fn_temp = 0.
+            fp_temp = 0.
+            for k in range(len(points)):
+                if points[k] > threshold[j]:
+                    if gts[k] == 1:
+                        tp_temp += 1
+                    else: fp_temp += 1
+                else:
+                    if gts[k] == 0:
+                        tn_temp += 1
+                    else: fn_temp += 1
+            fp = fp_temp/(tp_temp + fp_temp + tn_temp + fn_temp + 1e-6)
+            sen = tp_temp/(tp_temp + fn_temp + 1e-6)
+            if precision>0:
+                sensitivity.append(sen)
+                fp_perframe.append(fp)
+            print 'threshold:', threshold[j]
+            print 'sensitivity:', sen,'fp per frame:', fp
+#            print tp_temp,tn_temp,fp_temp,fn_temp
+        froc.plotFROC(fp_perframe,sensitivity,np.divide(range(10,101),100.), 'fROC.pdf',False)
+        
     except tf.errors.OutOfRangeError:
-        print('Done training -- epoch limit reached')
+        print('Done testing -- epoch limit reached')
 
     sess.close()
 
@@ -380,7 +460,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size,has_mask=False)
+    dataset_test = read_and_decode('../dataset/test.tfrecord', 1,batch_size,has_mask=False)
     nBatchs = config.nDatasTrain//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
@@ -470,7 +550,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             cur_test_eval = sess.run(accuracy,feed_dict={handle: handle_test, is_training:False, k_prob: 1.0} )   
             print 'step %5d: acc %.5f'%(i, cur_test_eval)
     except tf.errors.OutOfRangeError:
-        print('Done training -- epoch limit reached')
+        print('Done testing -- epoch limit reached')
 
     sess.close()
 

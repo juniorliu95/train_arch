@@ -34,6 +34,7 @@ def main(_):
     # epoch
     epoch = config.epoch
     batch_size = config.batch_size
+    test_batch_size = config.test_batch_size
     # 模型的学习率
     learning_rate = config.learning_rate
     keep_prob = config.keep_prob
@@ -47,14 +48,16 @@ def main(_):
     # 迁移学习模型参数
     checkpoint_path=config.checkpoint_path
     
+    model_path = config.model_path
+    
     if FLAGS.mode == 'train':
         print ("-----------------------------train start--------------------------")
         train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
               arch_model, checkpoint_exclude_scopes, checkpoint_path)
     elif FLAGS.mode == 'pre_test':
         print ("-----------------------------pre_test start--------------------------")
-        pre_test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,
-              arch_model, checkpoint_exclude_scopes, checkpoint_path)
+        pre_test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,test_batch_size,
+              arch_model, checkpoint_exclude_scopes, model_path)
     elif FLAGS.mode == 'test':
         print ("-----------------------------test start--------------------------")
         test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,

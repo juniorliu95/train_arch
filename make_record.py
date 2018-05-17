@@ -72,7 +72,7 @@ for i, img_name in enumerate(os.listdir(cwd + classes[1])):
     print("this is num %d" % i)
 writer.close()
 
-print('train.tfrecord finished!')
+print('--------------------------train.tfrecord finished!----------------------')
 
 
 
@@ -110,7 +110,7 @@ for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     print("this is num %d" % i)
 writer1.close()
 
-print('test.tfrecord finished!')
+print('-------------------test.tfrecord finished!-------------------------------')
 
 
 writer2 = tf.python_io.TFRecordWriter(cwd+"pre_test.tfrecord")
@@ -138,6 +138,7 @@ for i, img_name in enumerate(os.listdir(cwd+classes[2])):  # pre_test
     }))
     writer2.write(example.SerializeToString())
     print("this is num %d" % i)
+    
 for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     img_path = cwd + classes[3] + img_name
     img = Image.open(img_path)
@@ -165,7 +166,7 @@ for i, img_name in enumerate(os.listdir(cwd + classes[3])):
     print("this is num %d" % i)
 writer2.close()
 
-print('pre_test.tfrecord finished!')
+print('---------------------pre_test.tfrecord finished!--------------------------')
 
 
 writer3 = tf.python_io.TFRecordWriter(cwd+"val.tfrecord")
@@ -220,4 +221,4 @@ for i, img_name in enumerate(os.listdir(cwd + classes[6])):
     print("this is num %d" % i)
 writer3.close()
 
-print('val.tfrecord finished!')
+print('--------------------------val.tfrecord finished!-------------------------')
