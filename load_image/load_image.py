@@ -155,7 +155,8 @@ def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=T
         if has_mask:
             mask0 = tf.decode_raw(features['mask'], tf.uint8)
             mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
-            mask0 = tf.cast(mask0, tf.float32)/tf.reduce_max(mask0)
+            mask0 = tf.cast(mask0, tf.float32)
+            mask0 = mask0 / tf.reduce_max(mask0)
             return img0,label,mask0
         return img0, label
     dataset_train = get_dataset(filename)  

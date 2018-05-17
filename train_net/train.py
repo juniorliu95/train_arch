@@ -169,7 +169,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
     label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
-    print 'label size:' + str(label_batch.get_shape().as_list())
+
     # setup models
     if arch_model == "arch_inception_v4":
         net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
@@ -249,10 +249,8 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     # saver2.restore(sess, "model/fine-tune-1120")
     num_of_iteration = 0  # if retrained, add to i as the new name of ckpt.
     if checkpoint_path.find('ckpt') == -1:
-        try:
-            f = open(checkpoint_path + 'checkpoint')
-        except:
-            assert "no such file."
+        f = open(checkpoint_path + 'checkpoint')
+        # if failed, try --retrain=False
         line = f.readline()
         model = line.split('"')
         checkpoint_path += model[1]
