@@ -16,7 +16,7 @@ num_classes = 2
 # epoch
 epoch = 10
 batch_size = 2
-test_batch_size = 1
+test_batch_size = batch_size
 # 模型的学习率
 learning_rate = 0.00001
 keep_prob = 0.8
@@ -68,7 +68,7 @@ checkpoint_exclude_scopes = "Logits_out"
 
 nDatasTrain = 1000000
 nDatasTest = 800
-logdir = '../logs/m4d2a' 
+logdir = '../logs/'+arch_model 
 
 #训练好的模型参数在model文件夹下。
 

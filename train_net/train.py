@@ -247,6 +247,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
+    num_of_iteration = 0  # if retrained, add to i as the new name of ckpt.
     if checkpoint_path.find('ckpt') == -1:
         try:
             f = open(checkpoint_path + 'checkpoint')
@@ -255,6 +256,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         line = f.readline()
         model = line.split('"')
         checkpoint_path += model[1]
+        num_of_iteration += int(checkpoint_path[checkpoint_path.rfind('-')+1:])
         print 'checkpoint path:'
         print checkpoint_path
     saver_net.restore(sess, checkpoint_path)
@@ -290,7 +292,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
     finally:
-        saver2.save(sess, model_path, global_step=i, write_meta_graph=False)
+        saver2.save(sess, model_path, global_step=i+num_of_iteration, write_meta_graph=False)
         with open(model_path+'best.step','w') as f:  
             f.write('best step is %d\n'%best_step)  
             print 'best step is %d'%best_step 
@@ -430,13 +432,13 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                     else: fn_temp += 1
             pre = tp_temp/(tp_temp + fp_temp + 1e-6)
             rec = tp_temp/(tp_temp + fn_temp + 1e-6)
-            if precision>0:
+            if pre>0 and rec>0:
                 precision.append(pre)
                 recall.append(rec)
             print 'threshold:', threshold[j]
 #            print tp_temp,tn_temp,fp_temp,fn_temp
             print 'precision:',pre,'recall:', rec
-        froc.plotFROC(recall,precision,np.divide(range(10,101),100.), 'P-R.pdf',False)
+        froc.plotFROC(recall,precision,np.divide(range(10,101),100.), 'P-R.pdf',False,'recall','precision')
 
         # fROC curve
         sensitivity = []

@@ -147,15 +147,15 @@ def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=T
         img0 = tf.decode_raw(features['img_raw'], tf.uint8)
         img0 = tf.reshape(img0, [1024, 1024, 1])  # reshape为128*128的1通道图片
         img0 = tf.cast(img0, tf.float32)
-#        mean = tf.reduce_mean(img0)
-#        std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
-#        img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
+        mean = tf.reduce_mean(img0)
+        std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
+        img0 = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
         label = features['label'] # 在流中抛出label张量
         label = tf.cast(label, tf.float32)
         if has_mask:
             mask0 = tf.decode_raw(features['mask'], tf.uint8)
             mask0 = tf.reshape(mask0, [400, 400, 1])  # reshape为128*128的1通道图片
-            mask0 = tf.cast(mask0, tf.float32)
+            mask0 = tf.cast(mask0, tf.float32)/tf.reduce_max(mask0)
             return img0,label,mask0
         return img0, label
     dataset_train = get_dataset(filename)  
