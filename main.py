@@ -24,7 +24,8 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 import config
 # TODO:rewrite
 
-tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test")
+tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test.")
+tf.app.flags.DEFINE_bool('retrain', True, "if the model has been trained.")
 FLAGS = tf.app.flags.FLAGS
 
 def main(_):
@@ -46,14 +47,16 @@ def main(_):
     # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
     checkpoint_exclude_scopes = config.checkpoint_exclude_scopes
     # 迁移学习模型参数
-    checkpoint_path=config.checkpoint_path
+    model_path=config.checkpoint_path
+    if FLAGS.retrain:
+        model_path = config.model_path
+        print 'retain from retrained model.'
     
-    model_path = config.model_path
-    
+    # different mode
     if FLAGS.mode == 'train':
         print ("-----------------------------train start--------------------------")
         train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
-              arch_model, checkpoint_exclude_scopes, checkpoint_path)
+              arch_model, checkpoint_exclude_scopes, model_path)
     elif FLAGS.mode == 'pre_test':
         print ("-----------------------------pre_test start--------------------------")
         pre_test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,test_batch_size,
@@ -61,6 +64,6 @@ def main(_):
     elif FLAGS.mode == 'test':
         print ("-----------------------------test start--------------------------")
         test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,
-              arch_model, checkpoint_exclude_scopes, checkpoint_path)
+              arch_model, checkpoint_exclude_scopes, model_path)
 if __name__ == '__main__':
     tf.app.run()

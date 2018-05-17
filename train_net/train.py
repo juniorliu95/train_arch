@@ -15,11 +15,11 @@ slim = tf.contrib.slim
 from load_image.load_image import read_and_decode
 import config
 import froc
-from PIL import Image
+#from PIL import Image
 #from datetime import datetime
 #import math
 #import time
-import cv2
+#import cv2
 from mask import model_copy
 #from keras.utils import np_utils
 import time
@@ -247,6 +247,16 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
+    if checkpoint_path.find('ckpt') == -1:
+        try:
+            f = open(checkpoint_path + 'checkpoint')
+        except:
+            assert "no such file."
+        line = f.readline()
+        model = line.split('"')
+        checkpoint_path += model[1]
+        print 'checkpoint path:'
+        print checkpoint_path
     saver_net.restore(sess, checkpoint_path)
     
     handle_train, handle_val = sess.run([x.string_handle() for x in [iter_train, iter_val]])  
@@ -361,16 +371,23 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
+    if checkpoint_path.find('ckpt') == -1:
+        try:
+            f = open(checkpoint_path + 'checkpoint')
+        except:
+            assert "no such file."
+        line = f.readline()
+        model = line.split('"')
+        checkpoint_path += model[1]
+        print 'checkpoint path:'
+        print checkpoint_path
     saver_net.restore(sess, checkpoint_path)
     
     handle_test = sess.run(iter_test.string_handle())  
     
     
     threshold = np.divide(range(10,101), 100.)
-    tp = []
-    tn = []
-    fp = []
-    fn = []
+
     points = []
     gts = []
     try:
@@ -540,6 +557,16 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
+    if checkpoint_path.find('ckpt') == -1:
+        try:
+            f = open(checkpoint_path + 'checkpoint')
+        except:
+            assert "no such file."
+        line = f.readline()
+        model = line.split('"')
+        checkpoint_path += model[1]
+        print 'checkpoint path:'
+        print checkpoint_path
     saver_net.restore(sess, checkpoint_path)
     
     handle_test = sess.run(iter_test.string_handle())  

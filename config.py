@@ -14,7 +14,7 @@ IMAGE_HEIGHT = 1024
 IMAGE_WIDTH = 1024
 num_classes = 2
 # epoch
-epoch = 1
+epoch = 10
 batch_size = 2
 test_batch_size = 1
 # 模型的学习率
@@ -36,33 +36,37 @@ craterDir = "sample_train"
 #arch_model="arch_inception_v4"
 arch_model='inception_resnet_v2'
 
+# 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
+checkpoint_path = "../ckpt/" + arch_model + ".ckpt"
+
+# retrained model ckpts
+model_path = checkpoint_path
 # address to save trained models and for test to get ckpt
 if arch_model == "arch_inception_v4":
-        model_path = '../model/inception_v4/inception_v4'
+        model_path = '../model/inception_v4/'
 elif arch_model == "arch_resnet_v2_50":
-    model_path = '../model/resnet_v2_50/resnet_v2_50'   
+    model_path = '../model/resnet_v2_50/'   
 elif arch_model == "arch_resnet_v2_101":
-    model_path = '../model/resnet_v2_101/resnet_v2_101'
+    model_path = '../model/resnet_v2_101/'
     
 elif arch_model == "arch_resnet_v2_152":
-    model_path = '../model/resnet_v2_152/resnet_v2_152'       
+    model_path = '../model/resnet_v2_152/'       
 #    elif arch_model == "arch_resnet_v2_200":
 #        model_path = '../model/resnet_v2_200'
 #    elif arch_model == "vgg_16":
 #        model_path = '../model/vgg_16'    
 elif arch_model == "vgg_19":
-    model_path = '../model/vgg_19/vgg_19'
+    model_path = '../model/vgg_19/'
 elif arch_model == "inception_resnet_v2":
-    model_path = '../model/inception_resnet_v2/inception_resnet_v2'
+    model_path = '../model/inception_resnet_v2/'
 
 
 # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
 checkpoint_exclude_scopes = "Logits_out"
 
-# 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
-checkpoint_path = "../ckpt/" + arch_model + ".ckpt"
 
-nDatasTrain = 100000
+
+nDatasTrain = 1000000
 nDatasTest = 800
 logdir = '../logs/m4d2a' 
 
