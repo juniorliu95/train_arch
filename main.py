@@ -50,7 +50,7 @@ def main(_):
     model_path=config.checkpoint_path
     if FLAGS.retrain:
         model_path = config.model_path
-        print 'retain from retrained model.'
+        print 'start from retrained model.'
     
     # different mode
     if FLAGS.mode == 'train':
