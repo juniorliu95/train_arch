@@ -156,7 +156,7 @@ def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=Fal
 #            end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
     return net
 
-def g_parameter(checkpoint_exclude_scopes):
+def g_parameter(checkpoint_exclude_scopes,retrain=True):
     exclusions = []
     if checkpoint_exclude_scopes:
         exclusions = [scope.strip() for scope in checkpoint_exclude_scopes.split(',')]
@@ -173,7 +173,8 @@ def g_parameter(checkpoint_exclude_scopes):
             if var.op.name.startswith(exclusion):
                 excluded = True
                 variables_to_train.append(var)
-                variables_to_restore.append(var)
+                if retrain:
+                    variables_to_restore.append(var)
                 print ("ok")
                 print (var.op.name)
                 break
@@ -183,7 +184,8 @@ def g_parameter(checkpoint_exclude_scopes):
 
 
 def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64,keep_prob=0.8,
-           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out", checkpoint_path="../ckpt/inception_v4/inception_v4.ckpt"):
+           arch_model="arch_inception_v4",checkpoint_exclude_scopes="Logits_out",
+          checkpoint_path="../ckpt/inception_v4/inception_v4.ckpt", retrain=True):
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
@@ -241,10 +243,8 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         net = []
         model_path = '../model/'+arch_model
         assert(net == [], 'model not expected:'+ arch_model)
-        
-        
-    
-    variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes)
+
+    variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
     loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
@@ -332,7 +332,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
 def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          checkpoint_path="../model/inception_v4/inception_v4.ckpt"):
+          checkpoint_path="../model/inception_v4/inception_v4.ckpt",retrain=True):
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
@@ -382,7 +382,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         
         
     
-    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes)
+    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes,retrain)
     
     predict = tf.reshape(net, [-1, num_classes])
     predict_s = tf.nn.sigmoid(predict)
@@ -507,7 +507,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 
 def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          checkpoint_path="../model/inception_v4/inception_v4.ckpt"):
+          checkpoint_path="../model/inception_v4/inception_v4.ckpt",retrain=True):
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
@@ -568,7 +568,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         
         
     
-    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes)
+    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes,retrain)
     
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)

@@ -25,7 +25,7 @@ import config
 # TODO:rewrite
 
 tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test.")
-tf.app.flags.DEFINE_bool('retrain', True, "if the model has been trained.")
+tf.app.flags.DEFINE_bool('retrain', True, "if the model had been trained. For new layers reading.")
 FLAGS = tf.app.flags.FLAGS
 
 def main(_):
@@ -48,6 +48,7 @@ def main(_):
     checkpoint_exclude_scopes = config.checkpoint_exclude_scopes
     # 迁移学习模型参数
     model_path=config.checkpoint_path
+    retrain = True
     if FLAGS.retrain:
         model_path = config.model_path
         print 'start from retrained model.'
@@ -56,14 +57,14 @@ def main(_):
     if FLAGS.mode == 'train':
         print ("-----------------------------train start--------------------------")
         train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size,keep_prob,
-              arch_model, checkpoint_exclude_scopes, model_path)
+              arch_model, checkpoint_exclude_scopes, model_path, retrain)
     elif FLAGS.mode == 'pre_test':
         print ("-----------------------------pre_test start--------------------------")
         pre_test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,test_batch_size,
-              arch_model, checkpoint_exclude_scopes, model_path)
+              arch_model, checkpoint_exclude_scopes, model_path, retrain)
     elif FLAGS.mode == 'test':
         print ("-----------------------------test start--------------------------")
         test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,
-              arch_model, checkpoint_exclude_scopes, model_path)
+              arch_model, checkpoint_exclude_scopes, model_path, retrain)
 if __name__ == '__main__':
     tf.app.run()
