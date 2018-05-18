@@ -35,8 +35,8 @@
       <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_net/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="340">
-              <caret line="517" column="39" lean-forward="true" selection-start-line="517" selection-start-column="39" selection-end-line="517" selection-end-column="39" />
+            <state relative-caret-position="398">
+              <caret line="333" column="43" lean-forward="true" selection-start-line="333" selection-start-column="43" selection-end-line="333" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -798,8 +798,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_net/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="517" column="39" lean-forward="true" selection-start-line="517" selection-start-column="39" selection-end-line="517" selection-end-column="39" />
+        <state relative-caret-position="398">
+          <caret line="333" column="43" lean-forward="true" selection-start-line="333" selection-start-column="43" selection-end-line="333" selection-end-column="43" />
           <folding />
         </state>
       </provider>

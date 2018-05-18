@@ -330,7 +330,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/val.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
@@ -491,7 +491,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j]
             print 'sensitivity:', sen, 'fp per frame:', fp
 #            print tp_temp,tn_temp,fp_temp,fn_temp
-        froc.plotFROC(fp_perframe,sensitivity,np.divide(range(10,101),100.), 'fROC.pdf',False)
+        froc.plotFROC(fp_perframe,sensitivity, np.divide(range(10,101), 100.), 'fROC.pdf', False)
 
         # ROC curve
         sensitivity = []
