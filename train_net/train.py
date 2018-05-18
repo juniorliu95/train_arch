@@ -214,7 +214,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         model_path = '../model/resnet_v2_50/resnet_v2_50'
         
     elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101,mask=mask_batch)
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101, mask=mask_batch)
         model_path = '../model/resnet_v2_101/resnet_v2_101'
         
     elif arch_model == "arch_resnet_v2_152":
@@ -290,7 +290,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         checkpoint_path += model[1]
         num_of_iteration += int(checkpoint_path[checkpoint_path.rfind('-')+1:])
         print 'checkpoint path:'
-        print checkpoint_path
+        print checkpoint_path, 'num of iteration:', num_of_iteration
     saver_net.restore(sess, checkpoint_path)
     
     handle_train, handle_val = sess.run([x.string_handle() for x in [iter_train, iter_val]])  
