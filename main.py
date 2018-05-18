@@ -48,10 +48,11 @@ def main(_):
     checkpoint_exclude_scopes = config.checkpoint_exclude_scopes
     # 迁移学习模型参数
     model_path=config.checkpoint_path
-    retrain = True
+    retrain = False
     if FLAGS.retrain:
         model_path = config.model_path
         print 'start from retrained model.'
+        retrain = True
     
     # different mode
     if FLAGS.mode == 'train':
