@@ -246,7 +246,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
+    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
 
     var_list = variables_to_train
@@ -306,7 +306,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
                                                             feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )  
             # log to stdout and eval validation set  
             if i % 100 == 0 or i == nBatchs-1:  
-                saver2.save(sess, model_path+'model.ckpt', global_step=i) # save variables
+                saver2.save(sess, model_path+'model.ckpt', global_step=i+num_of_iteration) # save variables
                 summary_wrt.add_summary(summary, global_step=i)
                 start_time = time.time()
                 cur_val_loss, cur_val_eval = sess.run([loss, accuracy],  
