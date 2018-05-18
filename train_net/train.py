@@ -514,7 +514,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                         fn_temp += 1
             spec = tn_temp / (tn_temp + fp_temp + 1e-6)
             sen = tp_temp / (tp_temp + fn_temp + 1e-6)
-            if sen > 0 and fp > 0:
+            if sen > 0 and spec > 0:
                 sensitivity.append(sen)
                 specificity.append(spec)
             print 'threshold:', threshold[j]
