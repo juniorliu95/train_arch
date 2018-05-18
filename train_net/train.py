@@ -209,19 +209,19 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     # setup models
     if arch_model == "arch_inception_v4":
         net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
-        model_path = '../model/inception_v4/inception_v4'
+        model_path = '../model/inception_v4/'
 
     elif arch_model == "arch_resnet_v2_50":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
-        model_path = '../model/resnet_v2_50/resnet_v2_50'
+        model_path = '../model/resnet_v2_50/'
         
     elif arch_model == "arch_resnet_v2_101":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101, mask=mask_batch)
-        model_path = '../model/resnet_v2_101/resnet_v2_101'
+        model_path = '../model/resnet_v2_101/'
         
     elif arch_model == "arch_resnet_v2_152":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=152,mask=mask_batch)
-        model_path = '../model/resnet_v2_152/resnet_v2_152'
+        model_path = '../model/resnet_v2_152/'
 #        
 #    elif arch_model == "arch_resnet_v2_200":
 #        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
@@ -233,11 +233,11 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         
     elif arch_model == "vgg_19":
         net = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
-        model_path = '../model/vgg_19/vgg_19'
+        model_path = '../model/vgg_19/'
         
     elif arch_model == "inception_resnet_v2":
         net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
-        model_path = '../model/inception_resnet_v2/inception_resnet_v2'
+        model_path = '../model/inception_resnet_v2/'
         
     else:
         net = []
@@ -298,36 +298,30 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     
     summary_op_train = summary_op() 
     summary_wrt = tf.summary.FileWriter(config.logdir,sess.graph)
-    
-    best_loss = 1e6
-    
+
+    i = 0
     try:
-        for i in range(0, nBatchs):    
+        while i < nBatchs:
             _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
                                                             feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )  
             # log to stdout and eval validation set  
             if i % 100 == 0 or i == nBatchs-1:  
-                saver2.save(sess, model_path, global_step=i) # save variables  
+                saver2.save(sess, model_path+'model.ckpt', global_step=i) # save variables
                 summary_wrt.add_summary(summary, global_step=i)
                 start_time = time.time()
                 cur_val_loss, cur_val_eval = sess.run([loss, accuracy],  
                     feed_dict={handle: handle_val, is_training:False, k_prob: 1.0}) 
                 end_time = time.time()
                 val_time = end_time-start_time
-                if cur_val_loss < best_loss:  
-                    best_loss = cur_val_loss  
-                    best_step = i  
                 summary_wrt.add_summary(summary, global_step=i)  
                 print 'step %5d: time %.5f,loss %.5f, acc %.5f --- loss_val %0.5f, acc_val %.5f'%(i,   
                     val_time, cur_loss, cur_train_eval, cur_val_loss, cur_val_eval)  
                 # sess.run(init_train)
+                i += 1
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
     finally:
-        saver2.save(sess, model_path, global_step=i+num_of_iteration, write_meta_graph=False)
-        with open(model_path+'best.step','w') as f:  
-            f.write('best step is %d\n'%best_step)  
-            print 'best step is %d'%best_step 
+        saver2.save(sess, model_path+'model.ckpt', global_step=i+num_of_iteration, write_meta_graph=False)
     sess.close()
 
 def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
@@ -491,14 +485,44 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                     else: fn_temp += 1
             fp = fp_temp/(tp_temp + fp_temp + tn_temp + fn_temp + 1e-6)
             sen = tp_temp/(tp_temp + fn_temp + 1e-6)
-            if precision>0:
+            if sen > 0 and fp > 0:
                 sensitivity.append(sen)
                 fp_perframe.append(fp)
             print 'threshold:', threshold[j]
-            print 'sensitivity:', sen,'fp per frame:', fp
+            print 'sensitivity:', sen, 'fp per frame:', fp
 #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(fp_perframe,sensitivity,np.divide(range(10,101),100.), 'fROC.pdf',False)
-        
+
+        # ROC curve
+        sensitivity = []
+        specificity = []
+        for j in range(len(threshold)):
+            tp_temp = 0.
+            tn_temp = 0.
+            fn_temp = 0.
+            fp_temp = 0.
+            for k in range(len(points)):
+                if points[k] > threshold[j]:
+                    if gts[k] == 1:
+                        tp_temp += 1
+                    else:
+                        fp_temp += 1
+                else:
+                    if gts[k] == 0:
+                        tn_temp += 1
+                    else:
+                        fn_temp += 1
+            spec = tn_temp / (tn_temp + fp_temp + 1e-6)
+            sen = tp_temp / (tp_temp + fn_temp + 1e-6)
+            if sen > 0 and fp > 0:
+                sensitivity.append(sen)
+                specificity.append(spec)
+            print 'threshold:', threshold[j]
+            print 'sensitivity:', sen, 'specificity:', spec
+            #            print tp_temp,tn_temp,fp_temp,fn_temp
+        froc.plotFROC(specificity, sensitivity, np.divide(range(10, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
+
+
     except tf.errors.OutOfRangeError:
         print('Done testing -- epoch limit reached')
 
