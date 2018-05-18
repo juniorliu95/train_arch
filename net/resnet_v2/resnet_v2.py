@@ -179,19 +179,19 @@ def resnet_v2(inputs,
             mask_use = tf.stop_gradient(mask_end)
             net = mask_use * net
 
-        if global_pool:
-          # Global average pooling.
-          net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
-        if num_classes is not None:
-          net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
-                            normalizer_fn=None, scope='logits')
-          if spatial_squeeze:
-            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+#        if global_pool:
+#          # Global average pooling.
+#          net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
+#        if num_classes is not None:
+#          net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
+#                            normalizer_fn=None, scope='logits')
+#          if spatial_squeeze:
+#            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
         # Convert end_points_collection into a dictionary of end_points.
         end_points = slim.utils.convert_collection_to_dict(
             end_points_collection)
-        if num_classes is not None:
-          end_points['predictions'] = slim.softmax(net, scope='predictions')
+#        if num_classes is not None:
+#          end_points['predictions'] = slim.softmax(net, scope='predictions')
         return net, end_points
 resnet_v2.default_image_size = 224
 

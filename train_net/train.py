@@ -46,7 +46,14 @@ def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False, mas
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
             # 8 x 8 x 1536
-            print net.get_shape().as_list()
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out0')
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out1')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_1a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out2')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out3')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a')
             # 1 x 1 x 1536
@@ -75,11 +82,20 @@ def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out0')
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out1')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_1a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out2')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out3')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
+            
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a')
-            net = slim.conv2d(net, 1000, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out0')
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out0')
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out0')
-            net = slim.conv2d(net, 200, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out1')
+            net = slim.conv2d(net, 256, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out1')
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out1')
             net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out2')
             net = tf.squeeze(net,[1, 2], name='SpatialSqueeze')
@@ -98,6 +114,14 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out0')
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out1')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_1a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out2')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out3')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a')
             net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,normalizer_fn=None,scope='fc8')
@@ -109,6 +133,15 @@ def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=Fal
     with slim.arg_scope(arg_scope):
         net, end_points = inception_resnet_v2(X, num_classes=num_classes, is_training=is_train, dropout_keep_prob=dropout_keep_prob, mask=mask)
         with tf.variable_scope('Logits_out'):
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out0')
+            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out1')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_1a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out2')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out3')
+            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
+            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
+            
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a_8x8')
             net = slim.flatten(net)
@@ -140,6 +173,7 @@ def g_parameter(checkpoint_exclude_scopes):
             if var.op.name.startswith(exclusion):
                 excluded = True
                 variables_to_train.append(var)
+                variables_to_restore.append(var)
                 print ("ok")
                 print (var.op.name)
                 break
@@ -371,7 +405,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     saver_net = tf.train.Saver(net_vars)
     # checkpoint_path = 'pretrain/inception_v4.ckpt'
     # saver2.restore(sess, "model/fine-tune-1120")
-    if checkpoint_path.find('ckpt') == -1:
+    if checkpoint_path.find('ckpt') == -1:  # not the original ckpt path
         try:
             f = open(checkpoint_path + 'checkpoint')
         except:

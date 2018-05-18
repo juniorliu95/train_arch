@@ -165,17 +165,17 @@ def vgg_16(inputs,
                          scope='dropout7')
       # Convert end_points_collection into a end_point dict.
       end_points = slim.utils.convert_collection_to_dict(end_points_collection)
-      if num_classes is not None:
-        net = slim.conv2d(net, num_classes, [1, 1],
-                          activation_fn=None,
-                          normalizer_fn=None,
-                          scope='fc8')
-        if spatial_squeeze:
-          net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
-          end_points[sc.name + '/fc8'] = net
-      else:
-          net = net
-          end_points = end_points
+#      if num_classes is not None:
+#        net = slim.conv2d(net, num_classes, [1, 1],
+#                          activation_fn=None,
+#                          normalizer_fn=None,
+#                          scope='fc8')
+#        if spatial_squeeze:
+#          net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
+#          end_points[sc.name + '/fc8'] = net
+#      else:
+#          net = net
+#          end_points = end_points
       return net, end_points
 vgg_16.default_image_size = 224
 
@@ -248,17 +248,17 @@ def vgg_19(inputs,
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout7')
       end_points = slim.utils.convert_collection_to_dict(end_points_collection)
-      if num_classes is not None:
-        net = slim.conv2d(net, num_classes, [1, 1],
-                          activation_fn=None,
-                          normalizer_fn=None,
-                          scope='fc8')
-        if spatial_squeeze:
-          net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
-          end_points[sc.name + '/fc8'] = net
-      else:
-          net = net
-          end_points = end_points
+#      if num_classes is not None:
+#        net = slim.conv2d(net, num_classes, [1, 1],
+#                          activation_fn=None,
+#                          normalizer_fn=None,
+#                          scope='fc8')
+#        if spatial_squeeze:
+#          net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
+#          end_points[sc.name + '/fc8'] = net
+#      else:
+#          net = net
+#          end_points = end_points
       return net, end_points
 vgg_19.default_image_size = 224
 

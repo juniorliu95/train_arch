@@ -14,7 +14,7 @@ IMAGE_HEIGHT = 1024
 IMAGE_WIDTH = 1024
 num_classes = 2
 # epoch
-epoch = 10
+epoch = 20
 batch_size = 2
 test_batch_size = batch_size
 # 模型的学习率

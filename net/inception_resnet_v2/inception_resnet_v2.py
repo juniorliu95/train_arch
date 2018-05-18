@@ -294,18 +294,18 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
 
       net, end_points = inception_resnet_v2_base(inputs, scope=scope,mask=mask)
 
-      if create_aux_logits:
-        with tf.variable_scope('AuxLogits'):
-          aux = end_points['PreAuxLogits']
-          aux = slim.avg_pool2d(aux, 5, stride=3, padding='VALID',
-                                scope='Conv2d_1a_3x3')
-          aux = slim.conv2d(aux, 128, 1, scope='Conv2d_1b_1x1')
-          aux = slim.conv2d(aux, 768, aux.get_shape()[1:3],
-                            padding='VALID', scope='Conv2d_2a_5x5')
-          aux = slim.flatten(aux)
-          aux = slim.fully_connected(aux, num_classes, activation_fn=None,
-                                     scope='Logits')
-          end_points['AuxLogits'] = aux
+#      if create_aux_logits:
+#        with tf.variable_scope('AuxLogits'):
+#          aux = end_points['PreAuxLogits']
+#          aux = slim.avg_pool2d(aux, 5, stride=3, padding='VALID',
+#                                scope='Conv2d_1a_3x3')
+#          aux = slim.conv2d(aux, 128, 1, scope='Conv2d_1b_1x1')
+#          aux = slim.conv2d(aux, 768, aux.get_shape()[1:3],
+#                            padding='VALID', scope='Conv2d_2a_5x5')
+#          aux = slim.flatten(aux)
+#          aux = slim.fully_connected(aux, num_classes, activation_fn=None,
+#                                     scope='Logits')
+#          end_points['AuxLogits'] = aux
 
     return net, end_points
 inception_resnet_v2.default_image_size = 299

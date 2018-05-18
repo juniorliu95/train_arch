@@ -274,45 +274,45 @@ def inception_v4(inputs, num_classes=None, is_training=True,
     with slim.arg_scope([slim.batch_norm, slim.dropout],
                         is_training=is_training):
       net, end_points = inception_v4_base(inputs, scope=scope,mask=mask)
-      if num_classes is not None:
-        with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
-                            stride=1, padding='SAME'):
-          # Auxiliary Head logits
-          if create_aux_logits:
-            with tf.variable_scope('AuxLogits'):
-              # 17 x 17 x 1024
-              aux_logits = end_points['Mixed_6h']
-              aux_logits = slim.avg_pool2d(aux_logits, [5, 5], stride=3,
-                                           padding='VALID',
-                                           scope='AvgPool_1a_5x5')
-              aux_logits = slim.conv2d(aux_logits, 128, [1, 1],
-                                     scope='Conv2d_1b_1x1')
-              aux_logits = slim.conv2d(aux_logits, 768,
-                                       aux_logits.get_shape()[1:3],
-                                       padding='VALID', scope='Conv2d_2a')
-              aux_logits = slim.flatten(aux_logits)
-              aux_logits = slim.fully_connected(aux_logits, num_classes,
-                                                activation_fn=None,
-                                                scope='Aux_logits')
-              end_points['AuxLogits'] = aux_logits
-
-          # Final pooling and prediction
-          with tf.variable_scope('Logits'):
-            # 8 x 8 x 1536
-            net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
-                                  scope='AvgPool_1a')
-            # 1 x 1 x 1536
-            net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b')
-            net = slim.flatten(net, scope='PreLogitsFlatten')
-            end_points['PreLogitsFlatten'] = net
-            # 1536
-            logits = slim.fully_connected(net, num_classes, activation_fn=None,
-                                          scope='Logits')
-            end_points['Logits'] = logits
-            end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
-      else: 
-        logits = net
-        end_points = end_points
+#      if num_classes is not None:
+#        with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
+#                            stride=1, padding='SAME'):
+#          # Auxiliary Head logits
+#          if create_aux_logits:
+#            with tf.variable_scope('AuxLogits'):
+#              # 17 x 17 x 1024
+#              aux_logits = end_points['Mixed_6h']
+#              aux_logits = slim.avg_pool2d(aux_logits, [5, 5], stride=3,
+#                                           padding='VALID',
+#                                           scope='AvgPool_1a_5x5')
+#              aux_logits = slim.conv2d(aux_logits, 128, [1, 1],
+#                                     scope='Conv2d_1b_1x1')
+#              aux_logits = slim.conv2d(aux_logits, 768,
+#                                       aux_logits.get_shape()[1:3],
+#                                       padding='VALID', scope='Conv2d_2a')
+#              aux_logits = slim.flatten(aux_logits)
+#              aux_logits = slim.fully_connected(aux_logits, num_classes,
+#                                                activation_fn=None,
+#                                                scope='Aux_logits')
+#              end_points['AuxLogits'] = aux_logits
+#
+#          # Final pooling and prediction
+#          with tf.variable_scope('Logits'):
+#            # 8 x 8 x 1536
+#            net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
+#                                  scope='AvgPool_1a')
+#            # 1 x 1 x 1536
+#            net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b')
+#            net = slim.flatten(net, scope='PreLogitsFlatten')
+#            end_points['PreLogitsFlatten'] = net
+#            # 1536
+#            logits = slim.fully_connected(net, num_classes, activation_fn=None,
+#                                          scope='Logits')
+#            end_points['Logits'] = logits
+#            end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
+#      else: 
+#        logits = net
+#        end_points = end_points
     return net, end_points
 inception_v4.default_image_size = 299
 
