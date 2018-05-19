@@ -175,8 +175,8 @@ def g_parameter(checkpoint_exclude_scopes,retrain=True):
                 variables_to_train.append(var)
                 if retrain:
                     variables_to_restore.append(var)
-                print ("ok")
                 print (var.op.name)
+                print ("ok")
                 break
         if not excluded:
             variables_to_restore.append(var)
@@ -298,10 +298,9 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     
     summary_op_train = summary_op() 
     summary_wrt = tf.summary.FileWriter(config.logdir,sess.graph)
-
-    i = 0
+    iterate = 0
     try:
-        while i < nBatchs:
+        for i in range(0, nBatchs):
             _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
                                                             feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )  
             # log to stdout and eval validation set  
@@ -317,11 +316,11 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
                 print 'step %5d: time %.5f,loss %.5f, acc %.5f --- loss_val %0.5f, acc_val %.5f'%(i,   
                     val_time, cur_loss, cur_train_eval, cur_val_loss, cur_val_eval)  
                 # sess.run(init_train)
-                i += 1
+            iterate = i
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
     finally:
-        saver2.save(sess, model_path+'model.ckpt', global_step=i+num_of_iteration, write_meta_graph=False)
+        saver2.save(sess, model_path+'model.ckpt', global_step=iterate + num_of_iteration, write_meta_graph=False)
     sess.close()
 
 def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
@@ -439,6 +438,9 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             points.append(output[0][1])
             gts.append(label_out[0][1])
         
+    except tf.errors.OutOfRangeError:
+        print('Done testing -- epoch limit reached')
+    finally:
         # P-R curve
         precision = []
         recall = []
@@ -464,8 +466,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j]
 #            print tp_temp,tn_temp,fp_temp,fn_temp
             print 'precision:',pre,'recall:', rec
-        froc.plotFROC(recall,precision,np.divide(range(10,101),100.), 'P-R.pdf',False,'recall','precision')
-
+        froc.plotFROC(recall,precision, np.divide(range(10,101), 100.), 'P-R.pdf', False,'recall','precision')
         # fROC curve
         sensitivity = []
         fp_perframe = []
@@ -521,11 +522,6 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'sensitivity:', sen, 'specificity:', spec
             #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(specificity, sensitivity, np.divide(range(10, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
-
-
-    except tf.errors.OutOfRangeError:
-        print('Done testing -- epoch limit reached')
-
     sess.close()
 
 
