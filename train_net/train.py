@@ -413,7 +413,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     handle_test = sess.run(iter_test.string_handle())  
     
     
-    threshold = np.divide(range(10,101), 100.)
+    threshold = np.divide(range(0,101), 100.)
 
     points = []
     gts = []
@@ -466,7 +466,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j]
 #            print tp_temp,tn_temp,fp_temp,fn_temp
             print 'precision:',pre,'recall:', rec
-        froc.plotFROC(recall,precision, np.divide(range(10,101), 100.), 'P-R.pdf', False,'recall','precision')
+        froc.plotFROC(recall,precision, np.divide(range(0,101), 100.), 'P-R.pdf', False, 'recall', 'precision')
         # fROC curve
         sensitivity = []
         fp_perframe = []
@@ -492,7 +492,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j]
             print 'sensitivity:', sen, 'fp per frame:', fp
 #            print tp_temp,tn_temp,fp_temp,fn_temp
-        froc.plotFROC(fp_perframe,sensitivity, np.divide(range(10,101), 100.), 'fROC.pdf', False)
+        froc.plotFROC(fp_perframe,sensitivity, np.divide(range(0,101), 100.), 'fROC.pdf', False)
 
         # ROC curve
         sensitivity = []
@@ -513,7 +513,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                         tn_temp += 1
                     else:
                         fn_temp += 1
-            spec = tn_temp / (tn_temp + fp_temp + 1e-6)
+            spec = fp_temp / (tn_temp + fp_temp + 1e-6)
             sen = tp_temp / (tp_temp + fn_temp + 1e-6)
             if sen > 0 and spec > 0:
                 sensitivity.append(sen)
@@ -521,7 +521,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j]
             print 'sensitivity:', sen, 'specificity:', spec
             #            print tp_temp,tn_temp,fp_temp,fn_temp
-        froc.plotFROC(specificity, sensitivity, np.divide(range(10, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
+        froc.plotFROC(specificity, sensitivity, np.divide(range(0, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
     sess.close()
 
 
