@@ -110,19 +110,20 @@ def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=T
         mean = tf.reduce_mean(img0)
         std = tf.sqrt(tf.reduce_mean((img0-mean)**2))
         img_w = (tf.cast(img0, tf.float32) - mean) * (1./std)  # 白化
-        if is_train:
-            img_w = data_aug.random_light(img_w)
+#        img_w = data_aug.random_light(img_w, is_train)
         label = features['label'] # 在流中抛出label张量
         label = tf.cast(label, tf.float32)
         if has_mask:
             mask = tf.decode_raw(features['mask'], tf.uint8)
             mask0 = tf.cast(tf.reshape(mask, [400, 400, 1]),tf.float32)  # reshape为128*128的1通道图片
             mask_w = mask0 / tf.reduce_max(mask0)
-            img_w, mask_w = data_aug.random_rotation(img_w,mask_w)
-            img_w, mask_w = data_aug.random_move(img_w,mask_w)
+            img_w, mask_w = data_aug.random_rotation(img_w,mask_w, is_train)
+            img_w, mask_w = data_aug.random_move(img_w,mask_w, is_train)
+            img_w, mask_w = data_aug.random_flip_horizonal(img_w,mask_w, is_train)
             return img_w,label,mask_w
-        img_w = data_aug.random_rotation0(img_w)
-        img_w = data_aug.random_move0(img_w)
+        img_w = data_aug.random_rotation0(img_w, is_train)
+        img_w = data_aug.random_move0(img_w, is_train)
+        img_w = data_aug.random_flip_horizonal0(img_w, is_train)
         return img_w, label
     dataset_train = get_dataset(filename)  
     dataset_train = dataset_train.repeat(epochs).shuffle(1000).batch(batch_size)

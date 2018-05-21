@@ -77,7 +77,7 @@ def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50
         elif name == 200:
             net, end_points = resnet_v2_200(X, is_training=is_train, mask=mask)
         else:
-            net, end_points = [], []
+            net = []
             assert("not exist layer num:", name)
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
@@ -109,7 +109,7 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
         elif name == 19:
             net, end_points = vgg_19(X, is_training=is_train, dropout_keep_prob=dropout_keep_prob, mask=mask)
         else:
-            net, end_points = [], []
+            net = []
             assert ("not exist layer num:", name)
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
@@ -329,7 +329,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test_public.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
