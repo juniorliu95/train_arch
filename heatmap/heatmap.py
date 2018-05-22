@@ -9,11 +9,11 @@ from PIL import Image
 from PIL import ImageDraw2
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import re
 import cv2
 import time
-import cf
+from heatmap import cf
 
 
 if sys.version > '3':
@@ -24,7 +24,7 @@ else:
 _IMG_WIDTH = 1024
 _IMG_HEIGHT = 1024
 
-TOP_DIR = '/home/huiying/sdb1/HY_chestfilm/test_personal/pathology_from_nih/'
+TOP_DIR = '../'
 IMG_DIR = 'Pleural_Thickening/'
 PRED_DIR = IMG_DIR[:-1]+"_result/"
 MASK_DIR = IMG_DIR[:-1]+"_seg_mask/"
@@ -73,7 +73,7 @@ class HeatMap(object):
             return
 
         r = 240.0 / max_v
-        heat_data2 = [int(i * r) - 1 for i in heat_data]
+        heat_data2 = [int(i * r) - 1 for i in heat_data]  #convert to 240 steps
 
         size = width * height
         for p in xrange(size):
@@ -83,7 +83,7 @@ class HeatMap(object):
                 color = colors[v]
                 alpha = int(rr.findall(color)[0])  
                 alpha_put = int(200-2*alpha)
-                self.band_alpha.putpixel((x,y), alpha_put)           
+                self.band_alpha.putpixel((x, y), alpha_put)
                 if alpha > 50:
                     al = 255 - 255 * (alpha - 50) // 50
                     im.putpixel((x, y), (0, 0, 255, al))                 
@@ -257,13 +257,12 @@ def main():
     data_pred_label_df = pd.read_csv(TOP_DIR+PRED_DIR+"pred_label.csv")
     image_indexes = data_pred_label_df["filename"]
     label_dict = {
-            0:"Atelectasis", 1:"Cardiomegaly", 2:"Consolidation", 3:"Edema", 4:"Effusion",
-            5:"Emphysema", 6:"Fibrosis", 7:"Hernia", 8:"Infiltration", 9:"Mass",
-            10:"Nodule", 11:"Pleural_Thickening", 12:"Pneumonia", 13:"Pneumothorax"
+            0:"Normal", 1:"TB"
         }
 
     print("painting..")
     duration = []
+    
     for index, img_filename in enumerate(image_indexes):       
         if not index%100:         
             print("Create heatmap: {}/{}".format(index, len(image_indexes)))
@@ -283,7 +282,7 @@ def main():
             # if pred_label==1 and ture_label==1:
                 img_array_hm = data_cam[index, class_id, :, :]
                 # hm_list = to_hm_list(img_array_hm)  
-                save_name = label_dict[class_id] + "/" + img_filename
+                save_name = 'heatmap' + img_filename
                 start_time = time.time() 
                 hm.heatmap(data=img_array_hm, save_as=save_name)
                 duration.append(time.time() - start_time)

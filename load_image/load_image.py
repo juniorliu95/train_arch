@@ -121,11 +121,11 @@ def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=T
             mask = tf.decode_raw(features['mask'], tf.uint8)
             mask0 = tf.cast(tf.reshape(mask, [400, 400, 1]),tf.float32)  # reshape为128*128的1通道图片
             mask_w = mask0 / tf.reduce_max(mask0)
-            img_w, mask_w = data_aug.random_rotation(img_w,mask_w, is_train)
+            # img_w, mask_w = data_aug.random_rotation(img_w,mask_w, is_train)
             # img_w, mask_w = data_aug.random_move(img_w,mask_w, is_train)
             # img_w, mask_w = data_aug.random_flip_horizonal(img_w,mask_w, is_train)
             return img_w,label,mask_w, name
-        img_w = data_aug.random_rotation0(img_w, is_train)
+        # img_w = data_aug.random_rotation0(img_w, is_train)
         # img_w = data_aug.random_move0(img_w, is_train)
         # img_w = data_aug.random_flip_horizonal0(img_w, is_train)
         return img_w, label, name
