@@ -18,7 +18,7 @@ epoch = 10
 batch_size = 5
 test_batch_size = 1
 # 模型的学习率
-learning_rate = 0.00001
+learning_rate = 0.0000001
 keep_prob = 0.8
 
 # 设置训练样本的占总样本的比例：
