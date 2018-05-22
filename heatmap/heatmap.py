@@ -13,7 +13,7 @@ import numpy as np
 import re
 import cv2
 import time
-from heatmap import cf
+import cf
 
 
 if sys.version > '3':
