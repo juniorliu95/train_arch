@@ -96,14 +96,18 @@ def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=T
                                                features={
                                                    'label': tf.FixedLenFeature([], tf.int64),
                                                    'img_raw': tf.FixedLenFeature([], tf.string),
-                                                   'mask': tf.FixedLenFeature([], tf.string)
+                                                   'mask': tf.FixedLenFeature([], tf.string),
+                                                   'name': tf.FixedLenFeature([], tf.string)
                                                })  # 将image数据和label取出来
         else:
             features = tf.parse_single_example(serial_exmp,
                                                features={
                                                    'label': tf.FixedLenFeature([], tf.int64),
                                                    'img_raw': tf.FixedLenFeature([], tf.string),
+                                                   'name': tf.FixedLenFeature([], tf.string)
                                                })  # 将image数据和label取出来
+    
+        name = features['name']
         img = tf.decode_raw(features['img_raw'], tf.uint8)
         img0 = tf.cast(tf.reshape(img, [1024, 1024, 1]),tf.float32)  # reshape为128*128的1通道图片
         
@@ -120,19 +124,28 @@ def read_and_decode(filename, epochs=None,batch_size=1,is_train=True, has_mask=T
             img_w, mask_w = data_aug.random_rotation(img_w,mask_w, is_train)
             img_w, mask_w = data_aug.random_move(img_w,mask_w, is_train)
             img_w, mask_w = data_aug.random_flip_horizonal(img_w,mask_w, is_train)
-            return img_w,label,mask_w
+            return img_w,label,mask_w, name
         img_w = data_aug.random_rotation0(img_w, is_train)
         img_w = data_aug.random_move0(img_w, is_train)
         img_w = data_aug.random_flip_horizonal0(img_w, is_train)
-        return img_w, label
+        return img_w, label, name
     dataset_train = get_dataset(filename)  
     dataset_train = dataset_train.repeat(epochs).shuffle(1000).batch(batch_size)
     return dataset_train
 
-
-def test():
-    img0, label, mask0 = read_and_decode('./train.tfrecord', epoch=None, is_train=True)
-
 if __name__ == '__main__':
-    test()
+    with tf.Session() as sess:
+        
+        dataset_val = read_and_decode('../../dataset/pre_test.tfrecord', 1,1)
+        iter_val   = dataset_val.make_one_shot_iterator()
+             
+        handle = tf.placeholder(tf.string, shape=[])  
+        iterator = tf.data.Iterator.from_string_handle(handle, dataset_val.output_types, dataset_val.output_shapes)  
+        img_batch, label_batch, mask_batch, name = iterator.get_next()
+        
+        init = tf.global_variables_initializer()
+        sess.run(init)
+        
+        handle_val = sess.run(iter_val.string_handle())
+        print sess.run(name, feed_dict={handle:handle_val})
 

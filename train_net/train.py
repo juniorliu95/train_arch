@@ -54,15 +54,19 @@ def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False, mas
             net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
             net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
             net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
+            net1 = net
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a')
             # 1 x 1 x 1536
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out')
             net = slim.flatten(net, scope='PreLogitsFlatten_out')
             # 1536
-            net = slim.fully_connected(net, 256, activation_fn=tf.nn.relu, scope='Logits_out0')
-            net = slim.fully_connected(net, num_classes, activation_fn=None,scope='Logits_out1')
-    return net
+#            net = slim.fully_connected(net, 256, activation_fn=tf.nn.relu, scope='Logits_out0')
+            
+            net = slim.fully_connected(net, num_classes, activation_fn=None, scope='Logits')
+            out = g_heatmap(net1)
+            end_points['heatmap'] = out
+    return net, end_points
 
 def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50, mask=None):
     arg_scope = resnet_arg_scope()
@@ -122,11 +126,14 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
             net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
             net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
             net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
+            net1 = net
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a')
-            net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,normalizer_fn=None,scope='fc8')
+            net = slim.fully_connected(net, num_classes, activation_fn=None,normalizer_fn=None,scope='Logits')
+            out = g_heatmap(net1)
+            end_points['heatmap'] = out
             net = tf.squeeze(net,[1,2], name='fc8/squeezed')
-    return net
+    return net, end_points
 
 def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
     arg_scope = inception_resnet_v2_arg_scope()
@@ -142,32 +149,41 @@ def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=Fal
             net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
             net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
             
+            net1 = net
+            
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a_8x8')
             net = slim.flatten(net)
     
             net = slim.dropout(net, dropout_keep_prob, is_training=is_train,
                                scope='Dropout')
-    
+            
             end_points['PreLogitsFlatten'] = net
             net = slim.fully_connected(net, num_classes, activation_fn=None,
                                           scope='Logits')
             end_points['Logits'] = net
 #            end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
-    return net
+            out = g_heatmap(net1)
+            end_points['heatmap'] = out
+    return net, end_points
+
+
+def g_heatmap(net):
+    weight = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'Logits_out/Logits/weights:0')
+#    print weight
+    w1,w2 = tf.split(weight,2,axis=-1)
+    w2 = tf.squeeze(w2,axis=-1)
+    out = tf.reduce_mean(net * w2,axis=-1)
+    return out
 
 def g_parameter(checkpoint_exclude_scopes,retrain=True):
     exclusions = []
     if checkpoint_exclude_scopes:
         exclusions = [scope.strip() for scope in checkpoint_exclude_scopes.split(',')]
     print (exclusions)
-    # 需要加载的参数。
     variables_to_restore = []
-    # 需要训练的参数
     variables_to_train = []
     for var in slim.get_model_variables():
-    # 切记不要用下边这个，这是个天大的bug，调试了3天。
-    # for var in tf.trainable_variables():
         excluded = False
         for exclusion in exclusions:
             if var.op.name.startswith(exclusion):
@@ -189,14 +205,14 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_train = read_and_decode('../dataset/train.tfrecord', epoch,batch_size)
+    dataset_train = read_and_decode('../dataset/pre_test.tfrecord', epoch,batch_size)
     nBatchs = config.nDatasTrain*epoch//batch_size
     iter_train = dataset_train.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_train.output_types, dataset_train.output_shapes)  
-    img_batch, label_batch, mask_batch = iterator.get_next()
+    img_batch, label_batch, mask_batch, _ = iterator.get_next()
     
-    dataset_val = read_and_decode('../dataset/val.tfrecord', 1,1)
+    dataset_val = read_and_decode('../dataset/pre_test.tfrecord', 1,1)
     iter_val   = dataset_val.make_one_shot_iterator()
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
@@ -208,7 +224,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
     # setup models
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net, _ = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         model_path = '../model/inception_v4/'
 
     elif arch_model == "arch_resnet_v2_50":
@@ -232,11 +248,11 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 #        model_path = '../model/vgg_16'
         
     elif arch_model == "vgg_19":
-        net = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
+        net, _ = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
         model_path = '../model/vgg_19/'
         
     elif arch_model == "inception_resnet_v2":
-        net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,_ = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         model_path = '../model/inception_resnet_v2/'
         
     else:
@@ -329,12 +345,12 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/pre_test_public.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_test.output_types, dataset_test.output_shapes)  
-    img_batch, label_batch, mask_batch = iterator.get_next()  
+    img_batch, label_batch, mask_batch, name_batch = iterator.get_next()  
     # get a  new batch for each call
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
@@ -346,7 +362,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
     # setup models
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,_ = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
 
     elif arch_model == "arch_resnet_v2_50":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
@@ -364,10 +380,10 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 #        net = arch_vgg(X, num_classes, k_prob, is_training, name=16, mask=MASK)
         
     elif arch_model == "vgg_19":
-        net = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
+        net,_ = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
         
     elif arch_model == "inception_resnet_v2":
-        net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,_ = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     else:
         net = []
@@ -420,11 +436,11 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     try:
         for i in range(0, nBatchs):
             start_time = time.time()
-            output,label_out = sess.run([predict_s,label_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
+            output,label_out, name_out = sess.run([predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
             cur_test_eval = sess.run(accuracy,feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
             end_time = time.time()
             test_time = end_time - start_time
-            print 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
+            print name_out, 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
             
 #            img_out,label_out,mask_out = sess.run([img_batch,label_batch,mask_batch], feed_dict={handle:handle_test})
 #            img_out = np.reshape(img_out,[400,400,1])
@@ -559,7 +575,7 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
     # setup models
     if arch_model == "arch_inception_v4":
-        net = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,_ = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
 
     elif arch_model == "arch_resnet_v2_50":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
@@ -577,10 +593,10 @@ def test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 #        net = arch_vgg(X, num_classes, k_prob, is_training, name=16, mask=MASK)
         
     elif arch_model == "vgg_19":
-        net = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
+        net,_ = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
         
     elif arch_model == "inception_resnet_v2":
-        net = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,_ = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     else:
         net = None
