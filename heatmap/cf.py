@@ -90,3 +90,6 @@ def is_num(v):
         return True
 
     return False
+
+if __name__ == '__main__':
+    print mk_circle(1, 8)
