@@ -13,7 +13,7 @@ import numpy as np
 import re
 import cv2
 import time
-import cf
+from heatmap import cf
 
 if sys.version > '3':
     PY3 = True
@@ -38,10 +38,10 @@ class HeatMap(object):
                  height=0
                  ):
 
-        assert base is None or os.path.isfile(base)
-        assert mask is None or os.path.isfile(mask)
-        assert cf.is_num(width) and cf.is_num(height)
-        assert width >= 0 and height >= 0
+#        assert base is None or os.path.isfile(base)
+#        assert mask is None or os.path.isfile(mask)
+#        assert cf.is_num(width) and cf.is_num(height)
+#        assert width >= 0 and height >= 0
 
         self.data = data
         self.base = base
@@ -94,19 +94,18 @@ class HeatMap(object):
             base = self.base
         self.__im0 = None
 
-        if base:
-            str_type = (str,) if PY3 else (str, unicode)
-            self.__im0 = Image.open(base) if type(base) in str_type else base
-            self.__im0 = self.__im0.convert("RGBA")
+        self.__im0 = Image.fromarray(np.uint8(base))
+        self.__im0 = self.__im0.convert("RGBA")
 
         if not self.__im0:
             return
 
         # self.__im0.paste(self.__im, mask=self.__im)
-        img_resize = self.__im.resize((_IMG_WIDTH, _IMG_HEIGHT))
+        img_resize = self.__im.resize((_IMG_WIDTH, _IMG_HEIGHT),Image.ANTIALIAS)
 
         self.__im0.paste(img_resize, mask=img_resize)
         self.__im = self.__im0
+        self.__im = self.__im.convert('RGB')
 
     def __avgvalue(self, p, pix, template):
         l = self.width * self.height
@@ -181,7 +180,6 @@ class HeatMap(object):
     def heatmap(self, save_as=None, base=None, data=None, r=1):
         if not data.any():
             data = self.data
-
         self.height, self.width = data.shape
         self.__im = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
         self.band_alpha = self.__im.split()[-1]
@@ -196,7 +194,7 @@ class HeatMap(object):
                 n = data[y, x]
                 self.__heat(heat_data, x, y, n, circle)  # put on pixels one by one
 
-        self.__filter_data(heat_data, circle)
+#        self.__filter_data(heat_data, circle)
 
         self.__paint_heat(heat_data, cf.mk_colors())
         self.__im.putalpha(self.band_alpha)
@@ -211,10 +209,12 @@ class HeatMap(object):
 
     def __save(self):
         # save_as = os.path.join(os.getcwd(), self.save_as)
-        save_as = os.path.join(TOP_DIR + "heatmap/", self.save_as)
-        folder, fn = os.path.split(save_as)
-        if not os.path.isdir(folder):
-            os.makedirs(folder)
+#        save_as = os.path.join(TOP_DIR + "heatmap/", self.save_as)
+        save_as = TOP_DIR + "heatmap/" + self.save_as
+#        print(save_as)
+#        folder, fn = os.path.split(save_as)
+#        if not os.path.isdir(folder):
+#            os.makedirs(folder)
 
         self.__im.save(save_as)
         self.__im = None
@@ -249,21 +249,21 @@ def to_hm_list(img_array):
     return hm_list
 
 
-def main(data_cam, img_filename):
-    print 'painting', img_filename
+def main(data_cam, base, img_filename):
+#    print('file:%s' % img_filename)
     duration = []
 
-    hm = HeatMap()
+    hm = HeatMap(base=base)
 
     # if pred_label==1 and ture_label==1:
     img_array_hm = data_cam[0, :, :,1]
     # hm_list = to_hm_list(img_array_hm)
-    save_name = 'heatmap/' + img_filename
+    save_name = img_filename
     start_time = time.time()
     hm.heatmap(data=img_array_hm, save_as=save_name)
     duration.append(time.time() - start_time)
 
-    print("done.")
+#    print("done.")
 
 
 if __name__ == "__main__":

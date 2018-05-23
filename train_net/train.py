@@ -24,6 +24,7 @@ from mask import model_copy
 #from keras.utils import np_utils
 import time
 import os
+from heatmap import tb_map
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -103,7 +104,8 @@ def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out1')
             net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out2')
             net = tf.squeeze(net,[1, 2], name='SpatialSqueeze')
-    return net
+            end_points['heatmap'] = net
+    return net, end_points
 
 def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mask=None):
     arg_scope = vgg_arg_scope()
@@ -173,7 +175,7 @@ def g_heatmap(net):
 #    print weight
     w1,w2 = tf.split(weight,2,axis=-1)
     w2 = tf.squeeze(w2,axis=-1)
-    out = tf.reduce_mean(net * w2,axis=-1)
+    out = net * w2
     return out
 
 def g_parameter(checkpoint_exclude_scopes,retrain=True):
@@ -205,14 +207,14 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_train = read_and_decode('../dataset/pre_test.tfrecord', epoch,batch_size)
+    dataset_train = read_and_decode('../dataset/train.tfrecord', epoch,batch_size)
     nBatchs = config.nDatasTrain*epoch//batch_size
     iter_train = dataset_train.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_train.output_types, dataset_train.output_shapes)  
-    img_batch, label_batch, mask_batch, _ = iterator.get_next()
+    _, img_batch, label_batch, mask_batch, _ = iterator.get_next()
     
-    dataset_val = read_and_decode('../dataset/pre_test.tfrecord', 1,1)
+    dataset_val = read_and_decode('../dataset/val.tfrecord', 1,1)
     iter_val   = dataset_val.make_one_shot_iterator()
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
@@ -228,15 +230,15 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         model_path = '../model/inception_v4/'
 
     elif arch_model == "arch_resnet_v2_50":
-        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net, end_points = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         model_path = '../model/resnet_v2_50/'
         
     elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101, mask=mask_batch)
+        net, end_points = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101, mask=mask_batch)
         model_path = '../model/resnet_v2_101/'
         
     elif arch_model == "arch_resnet_v2_152":
-        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=152,mask=mask_batch)
+        net, end_points = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=152,mask=mask_batch)
         model_path = '../model/resnet_v2_152/'
 #        
 #    elif arch_model == "arch_resnet_v2_200":
@@ -345,12 +347,12 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/pre_test_m.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_test.output_types, dataset_test.output_shapes)  
-    img_batch, label_batch, mask_batch, name_batch = iterator.get_next()  
+    img0_batch, img_batch, label_batch, mask_batch, name_batch = iterator.get_next()  
     # get a  new batch for each call
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
@@ -358,11 +360,13 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         
     if img_batch.get_shape().as_list()[-1] == 1:
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
+        img0_batch = tf.concat([img0_batch, img0_batch, img0_batch], axis=-1)
+        img0_batch = tf.squeeze(img0_batch,axis=0)
 
     label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
     # setup models
     if arch_model == "arch_inception_v4":
-        net,_ = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,end_points = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
 
     elif arch_model == "arch_resnet_v2_50":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
@@ -380,10 +384,10 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 #        net = arch_vgg(X, num_classes, k_prob, is_training, name=16, mask=MASK)
         
     elif arch_model == "vgg_19":
-        net,_ = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
+        net,end_points = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
         
     elif arch_model == "inception_resnet_v2":
-        net,_ = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net,end_points = arch_inception_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     else:
         net = []
@@ -436,12 +440,15 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     try:
         for i in range(0, nBatchs):
             start_time = time.time()
-            output,label_out, name_out = sess.run([predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
+            img0_out, map_out,output,label_out, name_out = sess.run([img0_batch,end_points['heatmap'], predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
             cur_test_eval = sess.run(accuracy,feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
             end_time = time.time()
             test_time = end_time - start_time
-            print name_out, 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
+            print name_out[0], 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
             
+            #TODO: heat map
+            tb_map.main(map_out, img0_out,name_out[0])
+#            tb_map.main(map_out,img0_out,name_out)
 #            img_out,label_out,mask_out = sess.run([img_batch,label_batch,mask_batch], feed_dict={handle:handle_test})
 #            img_out = np.reshape(img_out,[400,400,1])
 #            a = np.uint8(img_out)
@@ -479,9 +486,8 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             if pre>0 and rec>0:
                 precision.append(pre)
                 recall.append(rec)
-            print 'threshold:', threshold[j]
 #            print tp_temp,tn_temp,fp_temp,fn_temp
-            print 'precision:',pre,'recall:', rec
+            print 'threshold:', threshold[j], 'precision:',pre,'recall:', rec
         froc.plotFROC(recall,precision, np.divide(range(0,101), 100.), 'P-R.pdf', False, 'recall', 'precision')
         # fROC curve
         sensitivity = []
@@ -505,8 +511,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             if sen > 0 and fp > 0:
                 sensitivity.append(sen)
                 fp_perframe.append(fp)
-            print 'threshold:', threshold[j]
-            print 'sensitivity:', sen, 'fp per frame:', fp
+            print 'threshold:', threshold[j], 'sensitivity:', sen, 'fp per frame:', fp
 #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(fp_perframe,sensitivity, np.divide(range(0,101), 100.), 'fROC.pdf', False)
 
@@ -534,8 +539,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             if sen > 0 and spec > 0:
                 sensitivity.append(sen)
                 specificity.append(spec)
-            print 'threshold:', threshold[j]
-            print 'sensitivity:', sen, 'specificity:', spec
+            print 'threshold:', threshold[j], 'sensitivity:', sen, 'specificity:', spec
             #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(specificity, sensitivity, np.divide(range(0, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
     sess.close()
