@@ -455,7 +455,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             if i == 0:
                 acc = cur_test_eval
             else:
-                acc = acc * i / (i+1) + cur_test_eval/(i+1)
+                acc = acc * i / (i+1.) + cur_test_eval/(i+1.)
             #TODO: heat map
             if arch_model.find("arch_resnet_v2_") == -1:  #no heatmap for ResNet
                 tb_map.main(map_out, img0_out,name_out[0])
