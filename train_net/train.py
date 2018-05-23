@@ -448,7 +448,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             else:
                 output,label_out, name_out = sess.run([predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
                 
-            cur_test_eval = sess.run(accuracy, feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
+            cur_test_eval, label_p = sess.run([accuracy,max_idx_l], feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
             end_time = time.time()
             test_time = end_time - start_time
             print name_out[0], 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
@@ -470,7 +470,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 #            print label_out[0][1]
             
             points.append(output[0][1])
-            gts.append(label_out[0][1])
+            gts.append(label_p[0])
         
     except tf.errors.OutOfRangeError:
         print('Done testing -- epoch limit reached')
