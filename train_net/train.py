@@ -83,6 +83,7 @@ def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50
             net, end_points = resnet_v2_200(X, is_training=is_train, mask=mask)
         else:
             net = []
+            end_points = []
             assert("not exist layer num:", name)
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
@@ -103,9 +104,9 @@ def arch_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False,name=50
             net = slim.conv2d(net, 256, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out1')
             net = slim.dropout(net, dropout_keep_prob, scope='Dropout_1b_out1')
             net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_out2')
-            net = tf.squeeze(net,[1, 2], name='SpatialSqueeze')
-            end_points['heatmap'] = net
-    return net, end_points
+            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+            # end_points['heatmap'] = net
+    return net
 
 def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mask=None):
     arg_scope = vgg_arg_scope()
@@ -116,6 +117,7 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
             net, end_points = vgg_19(X, is_training=is_train, dropout_keep_prob=dropout_keep_prob, mask=mask)
         else:
             net = []
+            end_points = []
             assert ("not exist layer num:", name)
 
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
@@ -230,15 +232,15 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         model_path = '../model/inception_v4/'
 
     elif arch_model == "arch_resnet_v2_50":
-        net, end_points = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         model_path = '../model/resnet_v2_50/'
         
     elif arch_model == "arch_resnet_v2_101":
-        net, end_points = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101, mask=mask_batch)
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101, mask=mask_batch)
         model_path = '../model/resnet_v2_101/'
         
     elif arch_model == "arch_resnet_v2_152":
-        net, end_points = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=152,mask=mask_batch)
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=152,mask=mask_batch)
         model_path = '../model/resnet_v2_152/'
 #        
 #    elif arch_model == "arch_resnet_v2_200":
@@ -366,7 +368,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
     # setup models
     if arch_model == "arch_inception_v4":
-        net,end_points = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net, end_points = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
 
     elif arch_model == "arch_resnet_v2_50":
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
