@@ -343,7 +343,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
 def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
           arch_model="arch_inception_v4", checkpoint_exclude_scopes="Logits_out",
-          checkpoint_path="../model/inception_v4/inception_v4.ckpt",retrain=True):
+          checkpoint_path="../model/inception_v4/inception_v4.ckpt",record=True):
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
@@ -395,7 +395,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         
         
     
-    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes,retrain)
+    variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes,True)
     
     predict = tf.reshape(net, [-1, num_classes])
     predict_s = tf.nn.sigmoid(predict)
@@ -440,14 +440,19 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     try:
         for i in range(0, nBatchs):
             start_time = time.time()
-            img0_out, map_out,output,label_out, name_out = sess.run([img0_batch,end_points['heatmap'], predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
+            if arch_model.find("arch_resnet_v2_") == -1:
+                img0_out, map_out,output,label_out, name_out = sess.run([img0_batch,end_points['heatmap'], predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
+            else:
+                output,label_out, name_out = sess.run([predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
+                
             cur_test_eval = sess.run(accuracy,feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
             end_time = time.time()
             test_time = end_time - start_time
             print name_out[0], 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
             
             #TODO: heat map
-            tb_map.main(map_out, img0_out,name_out[0])
+            if arch_model.find("arch_resnet_v2_") == -1:  #no heatmap for ResNet
+                tb_map.main(map_out, img0_out,name_out[0])
 #            tb_map.main(map_out,img0_out,name_out)
 #            img_out,label_out,mask_out = sess.run([img_batch,label_batch,mask_batch], feed_dict={handle:handle_test})
 #            img_out = np.reshape(img_out,[400,400,1])
@@ -467,7 +472,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         # P-R curve
         precision = []
         recall = []
-        document = open(arch_model+'_pr.txt','w+')
+        
         for j in range(len(threshold)):
             tp_temp = 0.
             tn_temp = 0.
@@ -491,6 +496,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j], 'precision:',pre,'recall:', rec
 
         froc.plotFROC(recall,precision, np.divide(range(0,101), 100.), 'P-R.pdf', False, 'recall', 'precision')
+        document = open('../results/' + arch_model+'_pr.txt','w+')
         document.write(str(precision))
         document.write('\n')
         document.write(str(recall))
@@ -524,7 +530,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         # ROC curve
         sensitivity = []
         specificity = []
-        document = open(arch_model+'_roc.txt','w+')
+        
         for j in range(len(threshold)):
             tp_temp = 0.
             tn_temp = 0.
@@ -550,6 +556,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             
             #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(specificity, sensitivity, np.divide(range(0, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
+        document = open('../results/' + arch_model+'_roc.txt','w+')
         document.write(str(sensitivity))
         document.write('\n')
         document.write(str(specificity))

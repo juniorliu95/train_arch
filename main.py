@@ -26,6 +26,7 @@ import config
 
 tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test.")
 tf.app.flags.DEFINE_bool('retrain', True, "if the model had been trained. For new layers reading.")
+tf.app.flags.DEFINE_bool('record', True, "whether to record pr and roc in txt.")
 FLAGS = tf.app.flags.FLAGS
 
 def main(_):
@@ -62,7 +63,7 @@ def main(_):
     elif FLAGS.mode == 'pre_test':
         print ("-----------------------------pre_test start--------------------------")
         pre_test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,test_batch_size,
-              arch_model, checkpoint_exclude_scopes, model_path, retrain)
+              arch_model, checkpoint_exclude_scopes, model_path, FLAGS.record)
     elif FLAGS.mode == 'test':
         print ("-----------------------------test start--------------------------")
         test(IMAGE_HEIGHT,IMAGE_WIDTH,num_classes,batch_size,
