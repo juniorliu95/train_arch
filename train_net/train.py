@@ -467,6 +467,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         # P-R curve
         precision = []
         recall = []
+        document = open(arch_model+'_pr.txt','w+')
         for j in range(len(threshold)):
             tp_temp = 0.
             tn_temp = 0.
@@ -488,7 +489,12 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                 recall.append(rec)
 #            print tp_temp,tn_temp,fp_temp,fn_temp
             print 'threshold:', threshold[j], 'precision:',pre,'recall:', rec
+
         froc.plotFROC(recall,precision, np.divide(range(0,101), 100.), 'P-R.pdf', False, 'recall', 'precision')
+        document.write(str(precision))
+        document.write('\n')
+        document.write(str(recall))
+        document.close()
         # fROC curve
         sensitivity = []
         fp_perframe = []
@@ -508,16 +514,17 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                     else: fn_temp += 1
             fp = fp_temp/(tp_temp + fp_temp + tn_temp + fn_temp + 1e-6)
             sen = tp_temp/(tp_temp + fn_temp + 1e-6)
-            if sen > 0 and fp > 0:
+            if sen > 0 :
                 sensitivity.append(sen)
                 fp_perframe.append(fp)
             print 'threshold:', threshold[j], 'sensitivity:', sen, 'fp per frame:', fp
 #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(fp_perframe,sensitivity, np.divide(range(0,101), 100.), 'fROC.pdf', False)
-
+        
         # ROC curve
         sensitivity = []
         specificity = []
+        document = open(arch_model+'_roc.txt','w+')
         for j in range(len(threshold)):
             tp_temp = 0.
             tn_temp = 0.
@@ -536,12 +543,17 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
                         fn_temp += 1
             spec = fp_temp / (tn_temp + fp_temp + 1e-6)
             sen = tp_temp / (tp_temp + fn_temp + 1e-6)
-            if sen > 0 and spec > 0:
+            if sen > 0:
                 sensitivity.append(sen)
                 specificity.append(spec)
             print 'threshold:', threshold[j], 'sensitivity:', sen, 'specificity:', spec
+            
             #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(specificity, sensitivity, np.divide(range(0, 101), 100.), 'ROC.pdf', False, 'specificity', 'sensitivity')
+        document.write(str(sensitivity))
+        document.write('\n')
+        document.write(str(specificity))
+        document.close()
     sess.close()
 
 
