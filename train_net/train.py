@@ -400,7 +400,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes,True)
     
     predict = tf.reshape(net, [-1, num_classes])
-    predict_s = tf.nn.sigmoid(predict)
+    predict_s = tf.nn.softmax(predict)
     max_idx_p = tf.argmax(predict_s, 1)
     max_idx_l = tf.argmax(label_batch, 1)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
