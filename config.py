@@ -33,8 +33,8 @@ craterDir = "sample_train"
 #arch_model="arch_resnet_v2_101"
 # arch_model="arch_resnet_v2_152"
 #arch_model="vgg_19"
-arch_model="arch_inception_v4"
-#arch_model='inception_resnet_v2'
+# arch_model="arch_inception_v4"
+arch_model='inception_resnet_v2'
 
 # 迁移学习模型参数， 下载训练好模型：https://github.com/MachineLP/models/tree/master/research/slim
 checkpoint_path = "../ckpt/" + arch_model + ".ckpt"
