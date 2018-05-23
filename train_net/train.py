@@ -26,7 +26,7 @@ import time
 import os
 from heatmap import tb_map
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-#os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 #from load_image.load_image import load_database_path, get_next_batch_from_path, shuffle_train_data
 # inception_v4

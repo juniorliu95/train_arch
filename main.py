@@ -20,16 +20,20 @@ from train_net.train import train, pre_test, test
 #import os 
 #from keras.utils import np_utils
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-#os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 import config
 # TODO:rewrite
 
 tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test.")
 tf.app.flags.DEFINE_bool('retrain', True, "if the model had been trained. For new layers reading.")
 tf.app.flags.DEFINE_bool('record', True, "whether to record pr and roc in txt.")
+tf.app.flags.DEFINE_string('arch_model', None, "arch_model")
+tf.app.flags.DEFINE_string('gpu', '0', "gpu")
 FLAGS = tf.app.flags.FLAGS
 
 def main(_):
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu
     IMAGE_HEIGHT = config.IMAGE_HEIGHT
     IMAGE_WIDTH = config.IMAGE_WIDTH
     num_classes = config.num_classes
@@ -44,7 +48,9 @@ def main(_):
 
     # 选择需要的模型
     # arch_model="arch_inception_v4";  arch_model="arch_resnet_v2_50"; arch_model="vgg_16"
-    arch_model=config.arch_model
+    arch_model = config.arch_model
+    if FLAGS.arch_model is not None:
+        arch_model = FLAGS.arch_model
     # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
     checkpoint_exclude_scopes = config.checkpoint_exclude_scopes
     # 迁移学习模型参数
