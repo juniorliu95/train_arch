@@ -528,7 +528,11 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             print 'threshold:', threshold[j], 'sensitivity:', sen, 'fp per frame:', fp
 #            print tp_temp,tn_temp,fp_temp,fn_temp
         froc.plotFROC(fp_perframe,sensitivity, np.divide(range(0,101), 100.), 'fROC.pdf', False)
-        
+        document = open('../results/' + arch_model+'_froc.txt','w+')
+        document.write(str(sensitivity))
+        document.write('\n')
+        document.write(str(fp_perframe))
+        document.close()
         # ROC curve
         sensitivity = []
         specificity = []
