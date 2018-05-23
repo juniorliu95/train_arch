@@ -439,6 +439,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
 
     points = []
     gts = []
+    acc = 0.
     try:
         for i in range(0, nBatchs):
             start_time = time.time()
@@ -447,11 +448,14 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
             else:
                 output,label_out, name_out = sess.run([predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
                 
-            cur_test_eval = sess.run(accuracy,feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
+            cur_test_eval = sess.run(accuracy, feed_dict={predict_s: output, label_batch:label_out, is_training:False, k_prob: 1.0} )   # careful
             end_time = time.time()
             test_time = end_time - start_time
             print name_out[0], 'step %3d: acc %.5f, time:%.5f'%(i, cur_test_eval,test_time)
-            
+            if i == 0:
+                acc = cur_test_eval
+            else:
+                acc = acc * i / (i+1) + cur_test_eval/(i+1)
             #TODO: heat map
             if arch_model.find("arch_resnet_v2_") == -1:  #no heatmap for ResNet
                 tb_map.main(map_out, img0_out,name_out[0])
@@ -567,6 +571,8 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         document.write('\n')
         document.write(str(specificity))
         document.close()
+
+        print 'acc:', acc
     sess.close()
 
 
