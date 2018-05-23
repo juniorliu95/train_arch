@@ -374,10 +374,10 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
         
     elif arch_model == "arch_resnet_v2_101":
-        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=101,mask=mask_batch)
         
     elif arch_model == "arch_resnet_v2_152":
-        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
+        net = arch_resnet_v2(img_batch, num_classes, k_prob, is_training,name=152,mask=mask_batch)
 #        
 #    elif arch_model == "arch_resnet_v2_200":
 #        net = arch_resnet_v2(X, num_classes, k_prob, is_training,name=200, mask=MASK)
