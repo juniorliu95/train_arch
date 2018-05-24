@@ -27,8 +27,8 @@
       <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_net/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="459">
-              <caret line="269" column="104" lean-forward="true" selection-start-line="269" selection-start-column="104" selection-end-line="269" selection-end-column="104" />
+            <state relative-caret-position="430">
+              <caret line="268" column="85" lean-forward="false" selection-start-line="268" selection-start-column="85" selection-end-line="268" selection-end-column="85" />
               <folding>
                 <element signature="e#78#96#0" expanded="true" />
               </folding>
@@ -36,21 +36,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="make_record.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/make_record.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="87">
-              <caret line="30" column="31" lean-forward="true" selection-start-line="30" selection-start-column="31" selection-end-line="30" selection-end-column="31" />
+            <state relative-caret-position="464">
+              <caret line="58" column="35" lean-forward="true" selection-start-line="58" selection-start-column="35" selection-end-line="58" selection-end-column="35" />
               <folding />
             </state>
           </provider>
@@ -59,7 +49,7 @@
       <file leaf-file-name="vgg.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="551">
+            <state relative-caret-position="1682">
               <caret line="227" column="55" lean-forward="true" selection-start-line="227" selection-start-column="55" selection-end-line="227" selection-end-column="55" />
               <folding />
             </state>
@@ -601,15 +591,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="87">
-          <caret line="30" column="31" lean-forward="true" selection-start-line="30" selection-start-column="31" selection-end-line="30" selection-end-column="31" />
+        <state relative-caret-position="464">
+          <caret line="58" column="35" lean-forward="true" selection-start-line="58" selection-start-column="35" selection-end-line="58" selection-end-column="35" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="551">
+        <state relative-caret-position="1682">
           <caret line="227" column="55" lean-forward="true" selection-start-line="227" selection-start-column="55" selection-end-line="227" selection-end-column="55" />
           <folding />
         </state>
@@ -617,8 +607,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_net/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="459">
-          <caret line="269" column="104" lean-forward="true" selection-start-line="269" selection-start-column="104" selection-end-line="269" selection-end-column="104" />
+        <state relative-caret-position="430">
+          <caret line="268" column="85" lean-forward="false" selection-start-line="268" selection-start-column="85" selection-end-line="268" selection-end-column="85" />
           <folding>
             <element signature="e#78#96#0" expanded="true" />
           </folding>

@@ -252,7 +252,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 #        model_path = '../model/vgg_16'
         
     elif arch_model == "vgg_19":
-        net, _ = arch_vgg(img_batch, num_classes, k_prob, is_training,name=19,mask=mask_batch)
+        net, _ = arch_vgg(img_batch, num_classes, k_prob, is_training, name=19, mask=mask_batch)
         model_path = '../model/vgg_19/'
         
     elif arch_model == "inception_resnet_v2":
@@ -266,6 +266,9 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
+    print '--------------------------------------------------------------------------'
+    print label_batch.get_shape()
+    print net.get_shape()
     loss = -tf.reduce_mean(tf.constant([1., 2.]) * label_batch * tf.log(net))  # focal loss
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
