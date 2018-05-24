@@ -49,8 +49,8 @@
       <file leaf-file-name="vgg.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="406">
-              <caret line="222" column="97" lean-forward="true" selection-start-line="222" selection-start-column="97" selection-end-line="222" selection-end-column="97" />
+            <state relative-caret-position="377">
+              <caret line="221" column="98" lean-forward="true" selection-start-line="221" selection-start-column="98" selection-end-line="221" selection-end-column="98" />
               <folding />
             </state>
           </provider>
@@ -609,8 +609,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="406">
-          <caret line="222" column="97" lean-forward="true" selection-start-line="222" selection-start-column="97" selection-end-line="222" selection-end-column="97" />
+        <state relative-caret-position="377">
+          <caret line="221" column="98" lean-forward="true" selection-start-line="221" selection-start-column="98" selection-end-line="221" selection-end-column="98" />
           <folding />
         </state>
       </provider>
