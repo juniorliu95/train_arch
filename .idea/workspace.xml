@@ -50,7 +50,7 @@
         <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="348">
-              <caret line="220" column="33" lean-forward="false" selection-start-line="220" selection-start-column="33" selection-end-line="220" selection-end-column="33" />
+              <caret line="220" column="74" lean-forward="true" selection-start-line="220" selection-start-column="74" selection-end-line="220" selection-end-column="74" />
               <folding />
             </state>
           </provider>
@@ -610,7 +610,7 @@
     <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="348">
-          <caret line="220" column="33" lean-forward="false" selection-start-line="220" selection-start-column="33" selection-end-line="220" selection-end-column="33" />
+          <caret line="220" column="74" lean-forward="true" selection-start-line="220" selection-start-column="74" selection-end-line="220" selection-end-column="74" />
           <folding />
         </state>
       </provider>
