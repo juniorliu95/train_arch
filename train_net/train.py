@@ -123,20 +123,20 @@ def arch_vgg(X, num_classes, dropout_keep_prob=0.8, is_train=False, name=16, mas
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
             net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out0')
-            net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out1')
-            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_1a')
-            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out2')
-            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out3')
-            net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
-            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
-            net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
-            net1 = net
-            net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
-                                  scope='AvgPool_1a')
-            net = slim.fully_connected(net, num_classes, activation_fn=None,normalizer_fn=None,scope='Logits')
-            out = g_heatmap(net1)
-            end_points['heatmap'] = out
-            net = tf.squeeze(net,[1,2], name='fc8/squeezed')
+            # net = slim.conv2d(net, 1024, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out1')
+            # net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_1a')
+            # net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out2')
+            # net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out3')
+            # net = slim.max_pool2d(net, [2, 2], scope='Logits_MaxPool_2a')
+            # net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out4')
+            # net = slim.conv2d(net, 512, [1, 1], activation_fn=None, normalizer_fn=None, scope='Logits_conv_out5')
+            # net1 = net
+            # net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
+            #                       scope='AvgPool_1a')
+            # net = slim.fully_connected(net, num_classes, activation_fn=None,normalizer_fn=None,scope='Logits')
+            # out = g_heatmap(net1)
+            # end_points['heatmap'] = out
+            # net = tf.squeeze(net,[1,2], name='fc8/squeezed')
     return net, end_points
 
 def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
