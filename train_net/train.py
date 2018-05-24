@@ -266,9 +266,9 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
-    logits = tf.cast(tf.argmax(tf.nn.softmax(net, axis=-1), 1),tf.float32)
-    label_batch0 = tf.cast(tf.argmax(label_batch, axis=-1),tf.float32)
-    loss = tf.reduce_mean(2 * label_batch0*tf.log(logits)+(1-label_batch0)*tf.log(1-logits))  # focal loss
+    _, logits = tf.split(tf.nn.softmax(net, axis=-1), 2, -1)
+    label_batch0 = tf.cast(tf.argmax(label_batch, axis=-1), tf.float32)
+    loss = tf.reduce_mean(-2 * label_batch0 * tf.log(logits) - (1-label_batch0)*tf.log(1-logits))  # focal loss
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
 
