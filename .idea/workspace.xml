@@ -27,8 +27,8 @@
       <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_net/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="459">
-              <caret line="356" column="82" lean-forward="true" selection-start-line="356" selection-start-column="82" selection-end-line="356" selection-end-column="82" />
+            <state relative-caret-position="372">
+              <caret line="356" column="57" lean-forward="false" selection-start-line="356" selection-start-column="57" selection-end-line="356" selection-end-column="57" />
               <folding>
                 <element signature="e#78#96#0" expanded="true" />
               </folding>
@@ -39,7 +39,7 @@
       <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="406">
+            <state relative-caret-position="-1334">
               <caret line="35" column="30" lean-forward="true" selection-start-line="35" selection-start-column="30" selection-end-line="35" selection-end-column="30" />
               <folding />
             </state>
@@ -599,7 +599,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="406">
+        <state relative-caret-position="-1334">
           <caret line="35" column="30" lean-forward="true" selection-start-line="35" selection-start-column="30" selection-end-line="35" selection-end-column="30" />
           <folding />
         </state>
@@ -607,8 +607,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_net/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="459">
-          <caret line="356" column="82" lean-forward="true" selection-start-line="356" selection-start-column="82" selection-end-line="356" selection-end-column="82" />
+        <state relative-caret-position="372">
+          <caret line="356" column="57" lean-forward="false" selection-start-line="356" selection-start-column="57" selection-end-line="356" selection-end-column="57" />
           <folding>
             <element signature="e#78#96#0" expanded="true" />
           </folding>
