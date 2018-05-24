@@ -325,8 +325,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     iterate = 0
     try:
         for i in range(0, nBatchs):
-            # print sess.run([logits], feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
-            print sess.run(label_batch, feed_dict={handle:handle_train})
+            print sess.run([net], feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
             # _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
             #                                                 feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
             # # log to stdout and eval validation set
