@@ -325,22 +325,24 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     iterate = 0
     try:
         for i in range(0, nBatchs):
-            _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
-                                                            feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )  
-            # log to stdout and eval validation set  
-            if i % 100 == 0 or i == nBatchs-1:  
-                saver2.save(sess, model_path+'model.ckpt', global_step=i+num_of_iteration) # save variables
-                summary_wrt.add_summary(summary, global_step=i)
-                start_time = time.time()
-                cur_val_loss, cur_val_eval = sess.run([loss, accuracy],  
-                    feed_dict={handle: handle_val, is_training:False, k_prob: 1.0}) 
-                end_time = time.time()
-                val_time = end_time-start_time
-                summary_wrt.add_summary(summary, global_step=i)  
-                print 'step %5d: time %.5f,loss %.5f, acc %.5f --- loss_val %0.5f, acc_val %.5f'%(i,   
-                    val_time, cur_loss, cur_train_eval, cur_val_loss, cur_val_eval)  
-                # sess.run(init_train)
-            iterate = i
+            cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy, summary_op_train],
+                                                            feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
+            # _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
+            #                                                 feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
+            # # log to stdout and eval validation set
+            # if i % 100 == 0 or i == nBatchs-1:
+            #     saver2.save(sess, model_path+'model.ckpt', global_step=i+num_of_iteration) # save variables
+            #     summary_wrt.add_summary(summary, global_step=i)
+            #     start_time = time.time()
+            #     cur_val_loss, cur_val_eval = sess.run([loss, accuracy],
+            #         feed_dict={handle: handle_val, is_training:False, k_prob: 1.0})
+            #     end_time = time.time()
+            #     val_time = end_time-start_time
+            #     summary_wrt.add_summary(summary, global_step=i)
+            #     print 'step %5d: time %.5f,loss %.5f, acc %.5f --- loss_val %0.5f, acc_val %.5f'%(i,
+            #         val_time, cur_loss, cur_train_eval, cur_val_loss, cur_val_eval)
+            #     # sess.run(init_train)
+            # iterate = i
     except tf.errors.OutOfRangeError:
         print('Done training -- epoch limit reached')
     finally:
