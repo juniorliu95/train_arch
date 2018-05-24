@@ -157,10 +157,10 @@ def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=Fal
             
             net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                   scope='AvgPool_1a_8x8')
-            net = slim.flatten(net)
+            # net = slim.flatten(net)
     
-            net = slim.dropout(net, dropout_keep_prob, is_training=is_train,
-                               scope='Dropout')
+            # net = slim.dropout(net, dropout_keep_prob, is_training=is_train,
+                               # scope='Dropout')
             
             end_points['PreLogitsFlatten'] = net
             net = slim.fully_connected(net, num_classes, activation_fn=None,
