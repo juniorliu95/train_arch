@@ -28,7 +28,7 @@ train_rate = 0.9
 craterDir = "sample_train"
 
 # 选择需要的模型
-#arch_model="arch_inception_v4";
+#arch_model="arch_inception_v4"
 #arch_model="arch_resnet_v2_50"
 #arch_model="arch_resnet_v2_101"
 # arch_model="arch_resnet_v2_152"
