@@ -20,30 +20,54 @@ from PIL import Image
 cwd = '../dataset/'
 classes = ('train/', 'train_normal/', 'test/', 'test_normal/', 'mask/', 'val/','val_normal/')
 
-#writer = tf.python_io.TFRecordWriter(cwd+"train.tfrecord")
-#for i, img_name in enumerate(os.listdir(cwd+classes[0])):  # train
-#    img_path = cwd+classes[0]+img_name
-#    img = Image.open(img_path)
-#    img = img.resize((1024, 1024))
-#    # ImgMean = ImageStat.Stat(img).mean
-#    # ImgStd = ImageStat.Stat(img).stddev
-#    # print(ImgMean, ImgStd)
-#    # img = (img-ImgMean)/ImgStd
-#    # print(img)
-#    # resize input: The requested size in pixels, as a 2-tuple: (width, height).
-#    # won't change the dimension of the picture...
-#    img_raw = img.tobytes()
-#
-#    mask_path = cwd + classes[4] + img_name
-#    mask = Image.open(mask_path)
-#    mask = mask.resize((400, 400))
-#    mask_raw = mask.tobytes()
-#    example = tf.train.Example(features=tf.train.Features(feature={
-#        'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
-#        'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
-#        'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw])),
-#        'name': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_name.encode('utf8')]))
-#    }))
+num = 0
+writer = tf.python_io.TFRecordWriter(cwd+"train.tfrecord")
+for img_name, normal_name in zip(os.listdir(cwd+classes[0]), os.listdir(cwd+classes[1])):  # train
+    img_path = cwd+classes[0]+img_name
+    img = Image.open(img_path)
+    img = img.resize((1024, 1024))
+    # ImgMean = ImageStat.Stat(img).mean
+    # ImgStd = ImageStat.Stat(img).stddev
+    # print(ImgMean, ImgStd)
+    # img = (img-ImgMean)/ImgStd
+    # print(img)
+    # resize input: The requested size in pixels, as a 2-tuple: (width, height).
+    # won't change the dimension of the picture...
+    img_raw = img.tobytes()
+
+    mask_path = cwd + classes[4] + img_name
+    mask = Image.open(mask_path)
+    mask = mask.resize((400, 400))
+    mask_raw = mask.tobytes()
+    
+    example = tf.train.Example(features=tf.train.Features(feature={
+        'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
+        'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
+        'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw])),
+        'name': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_name.encode('utf8')]))
+    }))
+    writer.write(example.SerializeToString())
+    
+    ##normal images
+    normal_path = cwd+classes[1]+normal_name
+    normal = Image.open(normal_path)
+    normal = normal.resize((1024, 1024))
+    normal_raw = normal.tobytes()
+
+    mask_path = cwd + classes[4] + normal_name
+    mask = Image.open(mask_path)
+    mask = mask.resize((400, 400))
+    mask_raw = mask.tobytes()
+    
+    example = tf.train.Example(features=tf.train.Features(feature={
+        'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[0])),
+        'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[normal_raw])),
+        'mask': tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask_raw])),
+        'name': tf.train.Feature(bytes_list=tf.train.BytesList(value=[normal_name.encode('utf8')]))
+    }))
+    writer.write(example.SerializeToString())
+    num += 1
+    print("this is num %d" % num)
 #    writer.write(example.SerializeToString())
 #    print("this is num %d" % i)
 #for i, img_name in enumerate(os.listdir(cwd + classes[1])):
