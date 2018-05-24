@@ -326,8 +326,9 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     try:
         for i in range(0, nBatchs):
             # print sess.run([net], feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
-            _, cur_loss, cur_train_eval, summary = sess.run([train_op, loss, accuracy,summary_op_train],
+            train_logits, _, cur_loss, cur_train_eval, summary = sess.run([logits, train_op, loss, accuracy,summary_op_train],
                                                             feed_dict={handle: handle_train, is_training:True, k_prob: keep_prob} )
+            print train_logits
             # log to stdout and eval validation set
             if i % 100 == 0 or i == nBatchs-1:
                 saver2.save(sess, model_path+'model.ckpt', global_step=i+num_of_iteration) # save variables
