@@ -279,7 +279,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)
     # max_idx_l = tf.argmax(label_batch, 1)
-    max_idx_l = label_batch
+    max_idx_l = tf.cast(label_batch,tf.int64)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
@@ -407,7 +407,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     predict_s = tf.nn.softmax(predict)
     max_idx_p = tf.argmax(predict_s, 1)
     # max_idx_l = tf.argmax(label_batch, 1)
-    max_idx_l = label_batch
+    max_idx_l = tf.cast(label_batch, tf.int64)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
