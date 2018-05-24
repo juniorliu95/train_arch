@@ -266,7 +266,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
-    net = tf.nn.softmax(net, axis=-1)
+    net = tf.nn.softmax(net)
     _, logits = tf.split(net, 2, axis=-1)
     loss = -tf.reduce_mean(2. * label_batch * tf.log(logits) + (1-label_batch) * tf.log(1-logits))  # focal loss
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
@@ -402,7 +402,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         
     
     variables_to_restore, _ = g_parameter(checkpoint_exclude_scopes,True)
-    net = tf.nn.softmax(net,axis=-1)
+    net = tf.nn.softmax(net)
     predict = tf.reshape(net, [-1, num_classes])
     predict_s = tf.nn.softmax(predict)
     max_idx_p = tf.argmax(predict_s, 1)
