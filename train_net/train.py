@@ -268,7 +268,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     # loss function
     net = tf.nn.softmax(net)
     _, logits = tf.split(net, 2, axis=-1)
-    loss = -tf.reduce_mean(2. * label_batch * tf.log(logits) + (1-label_batch) * tf.log(1-logits))  # focal loss
+    loss = -tf.reduce_mean(label_batch * tf.log(logits) + (1-label_batch) * tf.log(1-logits))  # focal loss
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
 
