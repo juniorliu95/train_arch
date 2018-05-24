@@ -27,8 +27,8 @@
       <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train_net/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="113" column="22" lean-forward="true" selection-start-line="113" selection-start-column="22" selection-end-line="113" selection-end-column="22" />
+            <state relative-caret-position="517">
+              <caret line="124" column="114" lean-forward="true" selection-start-line="124" selection-start-column="18" selection-end-line="124" selection-end-column="114" />
               <folding>
                 <element signature="e#78#96#0" expanded="true" />
               </folding>
@@ -39,7 +39,7 @@
       <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-29">
+            <state relative-caret-position="-1073">
               <caret line="17" column="14" lean-forward="true" selection-start-line="17" selection-start-column="14" selection-end-line="17" selection-end-column="14" />
               <folding />
             </state>
@@ -49,8 +49,8 @@
       <file leaf-file-name="vgg.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="348">
-              <caret line="220" column="74" lean-forward="true" selection-start-line="220" selection-start-column="74" selection-end-line="220" selection-end-column="74" />
+            <state relative-caret-position="406">
+              <caret line="222" column="97" lean-forward="true" selection-start-line="222" selection-start-column="97" selection-end-line="222" selection-end-column="97" />
               <folding />
             </state>
           </provider>
@@ -591,7 +591,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-29">
+        <state relative-caret-position="-1073">
           <caret line="17" column="14" lean-forward="true" selection-start-line="17" selection-start-column="14" selection-end-line="17" selection-end-column="14" />
           <folding />
         </state>
@@ -599,8 +599,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_net/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="113" column="22" lean-forward="true" selection-start-line="113" selection-start-column="22" selection-end-line="113" selection-end-column="22" />
+        <state relative-caret-position="517">
+          <caret line="124" column="114" lean-forward="true" selection-start-line="124" selection-start-column="18" selection-end-line="124" selection-end-column="114" />
           <folding>
             <element signature="e#78#96#0" expanded="true" />
           </folding>
@@ -609,8 +609,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/net/vgg/vgg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="348">
-          <caret line="220" column="74" lean-forward="true" selection-start-line="220" selection-start-column="74" selection-end-line="220" selection-end-column="74" />
+        <state relative-caret-position="406">
+          <caret line="222" column="97" lean-forward="true" selection-start-line="222" selection-start-column="97" selection-end-line="222" selection-end-column="97" />
           <folding />
         </state>
       </provider>
