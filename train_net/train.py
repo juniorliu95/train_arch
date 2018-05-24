@@ -370,7 +370,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
         img0_batch = tf.concat([img0_batch, img0_batch, img0_batch], axis=-1)
         img0_batch = tf.squeeze(img0_batch,axis=0)
 
-    # label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
+    label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
     # setup models
     if arch_model == "arch_inception_v4":
         net, end_points = arch_inception_v4(img_batch, num_classes, k_prob, is_training,mask=mask_batch)
