@@ -224,7 +224,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     if img_batch.get_shape().as_list()[-1] == 1:
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
-    # label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
+    label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
 
     # setup models
     if arch_model == "arch_inception_v4":
@@ -267,9 +267,9 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
     net = tf.nn.softmax(net)
-    _, logits = tf.split(net, 2, axis=-1)
-    loss = -tf.reduce_mean(label_batch * tf.log(logits) + (1-label_batch) * tf.log(1-logits))  # focal loss
-    # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
+    # _, logits = tf.split(net, 2, axis=-1)
+    # loss = -tf.reduce_mean(label_batch * tf.log(logits) + (1-label_batch) * tf.log(1-logits))  # focal loss
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
 
     var_list = variables_to_train
@@ -278,8 +278,8 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
         train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, var_list=var_list)
     predict = tf.reshape(net, [-1, num_classes])
     max_idx_p = tf.argmax(predict, 1)
-    # max_idx_l = tf.argmax(label_batch, 1)
-    max_idx_l = tf.cast(label_batch,tf.int64)
+    max_idx_l = tf.argmax(label_batch, 1)
+    # max_idx_l = tf.cast(label_batch,tf.int64)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
@@ -407,8 +407,8 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     predict = tf.reshape(net, [-1, num_classes])
     predict_s = tf.nn.softmax(predict)
     max_idx_p = tf.argmax(predict_s, 1)
-    # max_idx_l = tf.argmax(label_batch, 1)
-    max_idx_l = tf.cast(label_batch, tf.int64)
+    max_idx_l = tf.argmax(label_batch, 1)
+    # max_idx_l = tf.cast(label_batch, tf.int64)
     correct_pred = tf.equal(max_idx_p, max_idx_l)
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     #------------------------------------------------------------------------------------#
