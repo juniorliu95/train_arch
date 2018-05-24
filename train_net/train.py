@@ -214,7 +214,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     iter_train = dataset_train.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_train.output_types, dataset_train.output_shapes)  
-    _, img_batch, label_batch, mask_batch, _ = iterator.get_next()
+    _, img_batch, label_batch0, mask_batch, _ = iterator.get_next()
     
     dataset_val = read_and_decode('../dataset/val.tfrecord', 1,1)
     iter_val   = dataset_val.make_one_shot_iterator()
@@ -224,7 +224,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     if img_batch.get_shape().as_list()[-1] == 1:
         img_batch = tf.concat([img_batch, img_batch, img_batch], axis=-1)
 
-    label_batch = tf.cast(tf.one_hot(tf.cast(label_batch,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
+    label_batch = tf.cast(tf.one_hot(tf.cast(label_batch0,tf.uint8), num_classes, on_value=1, axis=1),tf.float32)
 
     # setup models
     if arch_model == "arch_inception_v4":
@@ -266,8 +266,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
 
     variables_to_restore,variables_to_train = g_parameter(checkpoint_exclude_scopes, retrain)
     # loss function
-    _, logits = tf.split(tf.nn.softmax(net, axis=-1), 2, -1)
-    label_batch0 = tf.cast(tf.argmax(label_batch, axis=-1), tf.float32)
+    temp, logits = tf.split(tf.nn.softmax(net, axis=-1), 2, -1)
     loss = tf.reduce_mean(-2 * label_batch0 * tf.log(logits) - (1-label_batch0)*tf.log(1-logits))  # focal loss
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label_batch, logits = net))
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = Y, logits = net))
