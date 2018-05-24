@@ -31,8 +31,8 @@ craterDir = "sample_train"
 #arch_model="arch_inception_v4"
 #arch_model="arch_resnet_v2_50"
 #arch_model="arch_resnet_v2_101"
-arch_model="arch_resnet_v2_152"
-# arch_model="vgg_19"
+# arch_model="arch_resnet_v2_152"
+arch_model="vgg_19"
 # arch_model="arch_inception_v4"
 # arch_model='inception_resnet_v2'
 
