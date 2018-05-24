@@ -32,7 +32,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def main(_):
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu
+    # os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu
     IMAGE_HEIGHT = config.IMAGE_HEIGHT
     IMAGE_WIDTH = config.IMAGE_WIDTH
     num_classes = config.num_classes
