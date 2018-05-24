@@ -51,6 +51,7 @@ def main(_):
     arch_model = config.arch_model
     if FLAGS.arch_model:
         arch_model = FLAGS.arch_model
+    print 'arch_model:',arch_model
     # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
     checkpoint_exclude_scopes = config.checkpoint_exclude_scopes
     # 迁移学习模型参数
