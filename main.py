@@ -27,7 +27,6 @@ import config
 tf.app.flags.DEFINE_string('mode', 'train', "train,pre_test or test.")
 tf.app.flags.DEFINE_bool('retrain', True, "if the model had been trained. For new layers reading.")
 tf.app.flags.DEFINE_bool('record', True, "whether to record pr and roc in txt.")
-tf.app.flags.DEFINE_string('arch_model', None, "arch_model")
 tf.app.flags.DEFINE_string('gpu', '0', "gpu")
 FLAGS = tf.app.flags.FLAGS
 
@@ -49,9 +48,6 @@ def main(_):
     # 选择需要的模型
     # arch_model="arch_inception_v4";  arch_model="arch_resnet_v2_50"; arch_model="vgg_16"
     arch_model = config.arch_model
-    if FLAGS.arch_model:
-        arch_model = FLAGS.arch_model
-    print 'arch_model:',arch_model
     # 设置要更新的参数和加载的参数，目前是非此即彼，可以自己修改哦
     checkpoint_exclude_scopes = config.checkpoint_exclude_scopes
     # 迁移学习模型参数
