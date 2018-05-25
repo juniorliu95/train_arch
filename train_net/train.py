@@ -209,14 +209,14 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_train = read_and_decode('../dataset/train.tfrecord', epoch,batch_size)
+    dataset_train = read_and_decode('../dataset/pre_test_c.tfrecord', epoch,batch_size)
     nBatchs = config.nDatasTrain*epoch//batch_size
     iter_train = dataset_train.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_train.output_types, dataset_train.output_shapes)  
     _, img_batch, label_batch, mask_batch, _ = iterator.get_next()
     
-    dataset_val = read_and_decode('../dataset/val.tfrecord', 1,1)
+    dataset_val = read_and_decode('../dataset/pre_test_c.tfrecord', 1,1)
     iter_val   = dataset_val.make_one_shot_iterator()
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
@@ -354,7 +354,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test_c.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
