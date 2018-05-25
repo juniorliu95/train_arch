@@ -22,10 +22,10 @@ learning_rate = 0.000001
 keep_prob = 0.8
 
 # 设置训练样本的占总样本的比例：
-train_rate = 0.9
+#train_rate = 0.9
 
 # 每个类别保存到一个文件中，放在此目录下，只要是二级目录就可以。
-craterDir = "sample_train"
+#craterDir = "sample_train"
 
 # 选择需要的模型
 #arch_model="arch_inception_v4"

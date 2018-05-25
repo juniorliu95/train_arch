@@ -216,7 +216,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     iterator = tf.data.Iterator.from_string_handle(handle, dataset_train.output_types, dataset_train.output_shapes)  
     _, img_batch, label_batch, mask_batch, _ = iterator.get_next()
     
-    dataset_val = read_and_decode('../dataset/pre_test_c.tfrecord', 1,1)
+    dataset_val = read_and_decode('../dataset/val.tfrecord', 1,1)
     iter_val   = dataset_val.make_one_shot_iterator()
     
     if IMAGE_HEIGHT != img_batch.get_shape().as_list()[1] or IMAGE_WIDTH != img_batch.get_shape().as_list()[2]:
