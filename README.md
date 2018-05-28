@@ -1,4 +1,4 @@
-test environment：Python 2.7, tensorflow 1.6,CUDA 9
+﻿test environment：Python 2.7, tensorflow 1.6,CUDA 9
 
 variable setting is in config.py。
 
@@ -29,3 +29,6 @@ file structure:
 	-arch_resnet_v2_101  
 	-arch_resnet_v2_50   
 	-inception_v4
+
+
+only the last part of the network is trained in default. Heatmap is not so accurate for 123 subsampling.

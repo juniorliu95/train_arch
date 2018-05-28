@@ -42,7 +42,7 @@ from net.inception_resnet_v2.inception_resnet_v2 import inception_resnet_v2_arg_
 def arch_inception_v4(X, num_classes, dropout_keep_prob=0.8, is_train=False, mask=None):
     arg_scope = inception_v4_arg_scope()
     with slim.arg_scope(arg_scope):
-        net, end_points = inception_v4(X, dropout_keep_prob=dropout_keep_prob,is_training=is_train,mask=mask)  
+        net, end_points = inception_v4(X, dropout_keep_prob=dropout_keep_prob,is_training=is_train,mask=mask)
         # inputs, num_classes=None, is_training=True,dropout_keep_prob=0.8,reuse=None,scope='InceptionV4',create_aux_logits=True,mask=None
     with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
         with tf.variable_scope('Logits_out'):
@@ -173,9 +173,9 @@ def arch_inception_resnet_v2(X, num_classes, dropout_keep_prob=0.8, is_train=Fal
 
 
 def g_heatmap(net):
-    weight = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'Logits_out/Logits/weights:0')
+    weight = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'Logits_out/Logits/weights:0')  # get the weights of fc layer.
 #    print weight
-    w1,w2 = tf.split(weight,2,axis=-1)
+    w1,w2 = tf.split(weight,2,axis=-1)  # only for 2 classes
     w2 = tf.squeeze(w2,axis=-1)
     out = net * w2
     return out
@@ -209,7 +209,7 @@ def train(IMAGE_HEIGHT,IMAGE_WIDTH,learning_rate,num_classes,epoch,batch_size=64
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_train = read_and_decode('../dataset/pre_test_c.tfrecord', epoch,batch_size)
+    dataset_train = read_and_decode('../dataset/train.tfrecord', epoch,batch_size)
     nBatchs = config.nDatasTrain*epoch//batch_size
     iter_train = dataset_train.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
@@ -354,7 +354,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     is_training = tf.placeholder_with_default(False, shape=(),name='is_training')
     k_prob = tf.placeholder('float') # dropout
 
-    dataset_test = read_and_decode('../dataset/pre_test_c.tfrecord', 1,batch_size)
+    dataset_test = read_and_decode('../dataset/pre_test.tfrecord', 1,batch_size)
     nBatchs = config.nDatasTest//batch_size
     iter_test = dataset_test.make_one_shot_iterator()
     handle = tf.placeholder(tf.string, shape=[])  
@@ -449,6 +449,7 @@ def pre_test(IMAGE_HEIGHT, IMAGE_WIDTH, num_classes, batch_size=64,
     try:
         for i in range(0, nBatchs):
             start_time = time.time()
+            # heat maps of ResNets are not generated because of net structure.
             if arch_model.find("arch_resnet_v2_") == -1:
                 img0_out, map_out,output,label_out, name_out = sess.run([img0_batch,end_points['heatmap'], predict_s,label_batch,name_batch],feed_dict={handle: handle_test, k_prob: 1.0} )
             else:
